@@ -1,7 +1,7 @@
 package writer
 
 import (
-	"cgstat/stats"
+	"github.com/strategicpause/cgstat/stats"
 )
 
 type StatsWriter interface {

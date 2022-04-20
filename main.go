@@ -1,8 +1,9 @@
 package main
 
 import (
-	"cgstat/controller"
-	"cgstat/stats"
+	"github.com/strategicpause/cgstat/controller"
+	"github.com/strategicpause/cgstat/stats"
+
 	"errors"
 	"flag"
 	"fmt"
@@ -22,7 +23,7 @@ func main() {
 }
 
 func PrintStats(args *stats.CgstatArgs) error {
-	controller,err := controller.NewCgroupStatsController(args)
+	controller, err := controller.NewCgroupStatsController(args)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ Cgstat is a tool for displaying stats about cgroups.
 ## Installation
 
 ```bash
-go build
+make build
 ```
 
 ## Usage

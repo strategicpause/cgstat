@@ -1,7 +1,8 @@
 package writer
 
 import (
-	"cgstat/stats"
+	"github.com/strategicpause/cgstat/stats"
+
 	"fmt"
 	"github.com/gosuri/uilive"
 	"sort"

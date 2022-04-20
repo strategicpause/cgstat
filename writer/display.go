@@ -1,7 +1,8 @@
 package writer
 
 import (
-	"cgstat/stats"
+	"github.com/strategicpause/cgstat/stats"
+
 	"github.com/gosuri/uilive"
 	"github.com/rodaine/table"
 )

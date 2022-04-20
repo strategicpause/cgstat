@@ -1,7 +1,8 @@
 package writer
 
-import "cgstat/stats"
+import "github.com/strategicpause/cgstat/stats"
 
+// NullWriter implements the StasWriter interface, but does nothing.
 type NullWriter struct {
 
 }

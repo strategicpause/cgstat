@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"cgstat/stats"
-	"cgstat/writer"
+	"github.com/strategicpause/cgstat/stats"
+	"github.com/strategicpause/cgstat/writer"
 	"fmt"
 	"time"
 )
