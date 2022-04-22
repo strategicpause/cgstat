@@ -120,6 +120,14 @@ func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats,  memMetrics 
 	cgStats.MaxUsage = memMetrics.Usage.Max
 	cgStats.MaxUtilization = float64(memMetrics.Usage.Max) / float64(memMetrics.Usage.Limit) * 100.0
 	cgStats.Rss = memMetrics.RSS
+	cgStats.PgPgIn = memMetrics.PgPgIn
+	cgStats.PgPgOut = memMetrics.TotalPgPgOut
+	cgStats.PgMajFault = memMetrics.PgMajFault
+	cgStats.ActiveAnon = memMetrics.ActiveAnon
+	cgStats.InactiveAnon = memMetrics.InactiveAnon
+	cgStats.ActiveFile = memMetrics.ActiveFile
+	cgStats.InactiveFile = memMetrics.TotalInactiveFile
+	cgStats.Unevictable = memMetrics.Unevictable
 	cgStats.CacheSize = memMetrics.Cache
 	cgStats.DirtySize = memMetrics.Dirty
 	cgStats.WriteBack = memMetrics.Writeback

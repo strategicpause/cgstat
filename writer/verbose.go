@@ -34,30 +34,52 @@ func (c *CgStatsVerboseWriter) Write(cgStats []*stats.CgroupStats) error {
 func (c *CgStatsVerboseWriter) printMemStats(cgstats *stats.CgroupStats) {
 	fmt.Fprintln(c.writer, "Memory Stats")
 
-	c.printMemStat("Usage", cgstats.CurrentUsage, cgstats.UsageLimit)
-	c.printMemStat("MaxUsage", cgstats.MaxUsage, cgstats.UsageLimit)
-	c.printMemStat("RSS", cgstats.Rss, cgstats.TotalRss)
-	c.printMemStat("RSSHuge", cgstats.RssHuge, cgstats.RssHugeTotal)
-	c.printMemStat("Writeback", cgstats.WriteBack, cgstats.TotalWriteBack)
-	c.printMemStat("Cache", cgstats.CacheSize, cgstats.TotalCacheSize)
-	c.printMemStat("Dirty", cgstats.DirtySize, cgstats.TotalDirtySize)
-	c.printMemStat("KernelUsage", cgstats.KernelUsage, cgstats.KernelUsageLimit)
-	c.printMemStat("KernelMax", cgstats.KernelMaxUsage,cgstats.KernelUsageLimit)
-	c.printMemStat("KernelTCPUsage", cgstats.KernelTCPUsage, cgstats.KernelTCPLimit)
-	c.printMemStat("KernelTCPMax", cgstats.KernelTCPMax, cgstats.KernelTCPLimit)
+	c.printMemUtilization("Usage", cgstats.CurrentUsage, cgstats.UsageLimit)
+	c.printMemUtilization("MaxUsage", cgstats.MaxUsage, cgstats.UsageLimit)
+	c.printMemStat("RSS", cgstats.Rss)
+	c.printMemStat("RSSHuge", cgstats.RssHuge)
+	c.printMemStat("Writeback", cgstats.WriteBack)
+	c.printMemStat("Cache", cgstats.CacheSize)
+	c.printMemStat("Dirty", cgstats.DirtySize)
+	c.printMemStat("PgPgIn", cgstats.PgPgIn)
+	c.printMemStat("PgPgOut", cgstats.PgPgOut)
+	c.printCounter("PgFault", cgstats.PgFault)
+	c.printCounter("PgMajFault", cgstats.PgMajFault)
+	c.printMemStat("ActiveAnon", cgstats.ActiveAnon)
+	c.printMemStat("InactiveAnon", cgstats.InactiveAnon)
+	c.printMemStat("ActiveFile", cgstats.ActiveFile)
+	c.printMemStat("InactiveFile", cgstats.InactiveFile)
+	c.printMemStat("Unevictable", cgstats.Unevictable)
+	c.printMemUtilization("KernelUsage", cgstats.KernelUsage, cgstats.KernelUsageLimit)
+	c.printMemUtilization("KernelMax", cgstats.KernelMaxUsage,cgstats.KernelUsageLimit)
+	c.printMemUtilization("KernelTCPUsage", cgstats.KernelTCPUsage, cgstats.KernelTCPLimit)
+	c.printMemUtilization("KernelTCPMax", cgstats.KernelTCPMax, cgstats.KernelTCPLimit)
 }
 
-func (c *CgStatsVerboseWriter) printMemStat(name string, value uint64, maxValue uint64) {
+func (c *CgStatsVerboseWriter) printMemUtilization(name string, value uint64, maxValue uint64) {
 	percentage := 0.0
 	if maxValue != 0 {
 		percentage = float64(value) / float64(maxValue) * 100.0
 	}
-	tab := "\t"
-	if len(name) < 7  {
-		tab = "\t\t"
-	}
-	fmt.Fprintf(c.writer,"\t%s:%s%v (%.2f%%)\n", name, tab, FormatBytes(value), percentage)
+
+	fmt.Fprintf(c.writer,"\t%s:%s%v / %v (%.2f%%)\n", name, c.getTabs(name), FormatBytes(value), FormatBytes(maxValue), percentage)
 }
+
+func (c *CgStatsVerboseWriter) getTabs(name string) string {
+	if len(name) < 7  {
+		return "\t\t"
+	}
+	return "\t"
+}
+
+func (c *CgStatsVerboseWriter) printMemStat(name string, value uint64) {
+	fmt.Fprintf(c.writer,"\t%s:%s%v\n", name, c.getTabs(name), FormatBytes(value))
+}
+
+func (c *CgStatsVerboseWriter) printCounter(name string, value uint64) {
+	fmt.Fprintf(c.writer,"\t%s:%s%d\n", name, c.getTabs(name), value)
+}
+
 
 func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
 	fmt.Fprintln(c.writer, "CPU Stats")
@@ -72,11 +94,7 @@ func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
 }
 
 func (c *CgStatsVerboseWriter) printCpuStat(name string, value float64) {
-	tab := "\t"
-	if len(name) < 10  {
-		tab = "\t\t"
-	}
-	fmt.Fprintf(c.writer,"\t%s:%s%.2f%%\n", name, tab, value)
+	fmt.Fprintf(c.writer,"\t%s:%s%.2f%%\n", name, c.getTabs(name), value)
 }
 
 
