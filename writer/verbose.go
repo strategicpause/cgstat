@@ -50,7 +50,7 @@ func (c *CgStatsVerboseWriter) printMemStats(cgstats *stats.CgroupStats) {
 func (c *CgStatsVerboseWriter) printMemStat(name string, value uint64, maxValue uint64) {
 	percentage := 0.0
 	if maxValue != 0 {
-		percentage = float64(value) / float64(maxValue) * 100
+		percentage = float64(value) / float64(maxValue) * 100.0
 	}
 	tab := "\t"
 	if len(name) < 7  {
@@ -67,8 +67,7 @@ func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
 		throttling = float64(cgstats.ThrottlePeriods) / float64(cgstats.TotalPeriods) * 100.0
 	}
 
-	c.printCpuStat("UserCPU", cgstats.UserCPU)
-	c.printCpuStat("KernelCPU", cgstats.KernelCPU)
+	c.printCpuStat("CPU", cgstats.CPU)
 	c.printCpuStat("ThrottlePeriods", throttling)
 }
 

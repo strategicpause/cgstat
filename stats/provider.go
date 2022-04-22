@@ -3,8 +3,15 @@ package stats
 import (
 	"github.com/containerd/cgroups"
 	v1 "github.com/containerd/cgroups/stats/v1"
+	"github.com/struCoder/pidusage"
 	"io/ioutil"
 	"path/filepath"
+	"time"
+)
+
+const (
+	// CPURefreshInterval determines how often to refresh CPU metrics
+	CPURefreshInterval = 100 * time.Millisecond
 )
 
 type CgroupStatsProvider struct {
@@ -59,44 +66,54 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) ([]*Cgr
 		if err != nil {
 			return nil, err
 		}
-		stat, err := control.Stat(cgroups.IgnoreNotExist)
+		cgroupStats, err := c.getCgroupStats(cgroup, control)
 		if err != nil {
 			return nil, err
 		}
-		stats = append(stats, getCgroupStats(cgroup, stat))
+		stats = append(stats, cgroupStats)
 	}
 	return stats, nil
 }
 
-func getCgroupStats(name string, metrics *v1.Metrics) *CgroupStats {
+func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (*CgroupStats, error) {
+	metrics, err := control.Stat(cgroups.IgnoreNotExist)
+
+	if err != nil {
+		return nil, err
+	}
 	cgStats := &CgroupStats {
 		Name:               name,
 		UnderOom:           metrics.MemoryOomControl.UnderOom,
 		OomKill:            metrics.MemoryOomControl.OomKill,
 	}
-	withCpuStats(cgStats, metrics.CPU)
-	withMemoryStats(cgStats, metrics.Memory)
-	withIOStats(cgStats, metrics.Blkio)
 
-	return cgStats
+	err = c.withCpuStats(cgStats, control, metrics.CPU)
+	if err != nil {
+		return nil, err
+	}
+	c.withMemoryStats(cgStats, metrics.Memory)
+	c.withIOStats(cgStats, metrics.Blkio)
+
+	return cgStats, nil
 }
 
-func withCpuStats(cgStats *CgroupStats,  cpuMetrics *v1.CPUStat) {
-	userCPU := 0.0
-	kernelCPU := 0.0
-
-	if cpuMetrics.Usage.Total != 0.0 {
-		userCPU = float64(cpuMetrics.Usage.User) / float64(cpuMetrics.Usage.Total) * 100
-		kernelCPU = float64(cpuMetrics.Usage.Kernel) / float64(cpuMetrics.Usage.Total) * 100
+func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups.Cgroup, cpuMetrics *v1.CPUStat) error {
+	processes, err := control.Processes("cpu", true)
+	if err != nil {
+		return err
+	}
+	for _, proc := range processes {
+		stat, _ := pidusage.GetStat(proc.Pid)
+		cgStats.CPU += stat.CPU
 	}
 
-	cgStats.UserCPU = userCPU
-	cgStats.KernelCPU = kernelCPU
 	cgStats.ThrottlePeriods = cpuMetrics.Throttling.ThrottledPeriods
 	cgStats.TotalPeriods = cpuMetrics.Throttling.Periods
+
+	return nil
 }
 
-func withMemoryStats(cgStats *CgroupStats,  memMetrics *v1.MemoryStat) {
+func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats,  memMetrics *v1.MemoryStat) {
 	cgStats.CurrentUsage = memMetrics.Usage.Usage
 	cgStats.UsageLimit = memMetrics.Usage.Limit
 	cgStats.CurrentUtilization = float64(memMetrics.Usage.Usage) / float64(memMetrics.Usage.Limit) * 100.0
@@ -108,18 +125,18 @@ func withMemoryStats(cgStats *CgroupStats,  memMetrics *v1.MemoryStat) {
 	cgStats.WriteBack = memMetrics.Writeback
 }
 
-func withIOStats(cgStats *CgroupStats, ioMetrics *v1.BlkIOStat) {
-	cgStats.IoServicedRecursive = getBlockDeviceStats(ioMetrics.IoServiceTimeRecursive)
-	cgStats.IoServiceBytesRecursive = getBlockDeviceStats(ioMetrics.IoServiceBytesRecursive)
-	cgStats.IoQueuedRecursive = getBlockDeviceStats(ioMetrics.IoQueuedRecursive)
-	cgStats.IoTimeRecursive = getBlockDeviceStats(ioMetrics.IoTimeRecursive)
-	cgStats.IoMergedRecursive = getBlockDeviceStats(ioMetrics.IoMergedRecursive)
-	cgStats.IoWaitTimeRecursive = getBlockDeviceStats(ioMetrics.IoWaitTimeRecursive)
-	cgStats.SectorsRecursive = getBlockDeviceStats(ioMetrics.SectorsRecursive)
-	cgStats.IoServiceTimeRecursive = getBlockDeviceStats(ioMetrics.IoServiceTimeRecursive)
+func (c *CgroupStatsProvider) withIOStats(cgStats *CgroupStats, ioMetrics *v1.BlkIOStat) {
+	cgStats.IoServicedRecursive = c.getBlockDeviceStats(ioMetrics.IoServiceTimeRecursive)
+	cgStats.IoServiceBytesRecursive = c.getBlockDeviceStats(ioMetrics.IoServiceBytesRecursive)
+	cgStats.IoQueuedRecursive = c.getBlockDeviceStats(ioMetrics.IoQueuedRecursive)
+	cgStats.IoTimeRecursive = c.getBlockDeviceStats(ioMetrics.IoTimeRecursive)
+	cgStats.IoMergedRecursive = c.getBlockDeviceStats(ioMetrics.IoMergedRecursive)
+	cgStats.IoWaitTimeRecursive = c.getBlockDeviceStats(ioMetrics.IoWaitTimeRecursive)
+	cgStats.SectorsRecursive = c.getBlockDeviceStats(ioMetrics.SectorsRecursive)
+	cgStats.IoServiceTimeRecursive = c.getBlockDeviceStats(ioMetrics.IoServiceTimeRecursive)
 }
 
-func getBlockDeviceStats(entries []*v1.BlkIOEntry) map[string]*BlockDevice {
+func (c *CgroupStatsProvider) getBlockDeviceStats(entries []*v1.BlkIOEntry) map[string]*BlockDevice {
 	devices := make(map[string]*BlockDevice)
 	for _, entry := range entries {
 		deviceName := entry.Device

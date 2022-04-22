@@ -1,5 +1,4 @@
-ROOT := $(shell pwd)
-
+default: release
 build:
 	@echo "Building project"
 	go build -o bin/cgstat main.go
@@ -18,7 +17,7 @@ lint:
 	/tmp/golangci-lint/golangci-lint run ./... --issues-exit-code=1 \
 
 tidy:
-	"Running go mod tidy"
+	echo "Running go mod tidy"
 	go mod tidy
 
 release: fmt lint tidy build

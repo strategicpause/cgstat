@@ -27,8 +27,7 @@ func ToCsvRow(cgStats *stats.CgroupStats) []string {
 	return []string {
 		string(t),
 		cgStats.Name,
-		fmt.Sprintf("%f", cgStats.UserCPU),
-		fmt.Sprintf("%f", cgStats.KernelCPU),
+		fmt.Sprintf("%f", cgStats.CPU),
 		fmt.Sprintf("%d", cgStats.CurrentUsage),
 		fmt.Sprintf("%d", cgStats.MaxUsage),
 		fmt.Sprintf("%d", cgStats.UsageLimit),
@@ -42,16 +41,15 @@ func ToCsvRow(cgStats *stats.CgroupStats) []string {
 }
 
 func ToDisplayRow(cgStats *stats.CgroupStats) []interface{} {
-	userCPU := fmt.Sprintf("%.2f%%", cgStats.UserCPU)
-	kernelCPU := fmt.Sprintf("%.2f%%", cgStats.KernelCPU)
+	CPU := fmt.Sprintf("%.2f%%", cgStats.CPU)
 	currentUsage := fmt.Sprintf("%s (%.2f%%)", FormatBytes(cgStats.CurrentUsage), cgStats.CurrentUtilization)
-	maxUsage := fmt.Sprintf("%s (%.2f%%)", FormatBytes(cgStats.MaxUsage), cgStats.CurrentUtilization)
+	maxUsage := fmt.Sprintf("%s (%.2f%%)", FormatBytes(cgStats.MaxUsage), cgStats.MaxUtilization)
 	usageLimit := FormatBytes(cgStats.UsageLimit)
 	rss := FormatBytes(cgStats.Rss)
 	cacheSize := FormatBytes(cgStats.CacheSize)
 	dirtySize := FormatBytes(cgStats.DirtySize)
 	writeback := FormatBytes(cgStats.WriteBack)
 
-	return []interface{} { cgStats.Name, userCPU, kernelCPU, currentUsage, maxUsage, usageLimit, rss,
+	return []interface{} { cgStats.Name, CPU, currentUsage, maxUsage, usageLimit, rss,
 		cacheSize, dirtySize, writeback, cgStats.UnderOom, cgStats.OomKill }
 }

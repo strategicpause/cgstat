@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/strategicpause/cgstat/controller"
-	"github.com/strategicpause/cgstat/stats"
-
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/strategicpause/cgstat/controller"
+	"github.com/strategicpause/cgstat/stats"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -45,14 +46,25 @@ func ParseArguments() *stats.CgstatArgs {
 	return &cgstatArgs
 }
 
-func ValidateArguments(cgstatArgs *stats.CgstatArgs) error {
-	if cgstatArgs.CgroupName == "" && cgstatArgs.CgroupPrefix == "" {
+func ValidateArguments(args *stats.CgstatArgs) error {
+	if args.CgroupName == "" && args.CgroupPrefix == "" {
 		return errors.New("cgroup name or prefix must be specified")
 	}
-	if cgstatArgs.VerboseOutput && cgstatArgs.CgroupPrefix != "" {
+	if args.VerboseOutput && args.CgroupPrefix != "" {
 		return errors.New("you must specify a cgroup name when using verbose output")
 	}
-	// TODO: Validate path
-	// TODO: Validate interval
+	if args.RefreshInterval < 0.0 {
+		return errors.New("you must specify a non-negative refresh interval")
+	}
+	if args.HasOutputFile() {
+		base, err := filepath.Abs(args.OutputFile)
+		if err != nil {
+			return err
+		}
+		_, err = os.Stat(filepath.Dir(base))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

@@ -20,7 +20,7 @@ type CgroupStatsController struct {
 	csvWriter writer.StatsWriter
 	statsProviderFn CgroupStatsProviderFn
 	followMode bool
-	refreshInterval time.Duration
+	ticker *time.Ticker
 }
 
 func NewCgroupStatsController(args *stats.CgstatArgs) (Controller, error) {
@@ -34,7 +34,7 @@ func NewCgroupStatsController(args *stats.CgstatArgs) (Controller, error) {
 		csvWriter: csvWriter,
 		statsProviderFn: getStatsProvider(args),
 		followMode: args.FollowMode,
-		refreshInterval: args.GetRefreshInterval(),
+		ticker: time.NewTicker(args.GetRefreshInterval()),
 	}, nil
 }
 
@@ -68,22 +68,29 @@ func getStatsProvider(args *stats.CgstatArgs) CgroupStatsProviderFn {
 func (c *CgroupStatsController) Start() error {
 	// Clear Screen
 	fmt.Print("\033[H\033[2J")
+
 	for {
-		cgroupStats, err := c.statsProviderFn()
-		if err != nil {
-			return err
+		select {
+			case <-c.ticker.C:
+				err := c.writeStats()
+				if err != nil {
+					return err
+				}
+				if !c.followMode {
+					return nil
+				}
 		}
-		err = c.displayWriter.Write(cgroupStats)
-		if err != nil {
-			return err
-		}
-		err = c.csvWriter.Write(cgroupStats)
-		if err != nil {
-			return err
-		}
-		if !c.followMode {
-			return nil
-		}
-		time.Sleep(c.refreshInterval)
 	}
+}
+
+func (c *CgroupStatsController) writeStats() error {
+	cgroupStats, err := c.statsProviderFn()
+	if err != nil {
+		return err
+	}
+	err = c.displayWriter.Write(cgroupStats)
+	if err != nil {
+		return err
+	}
+	return c.csvWriter.Write(cgroupStats)
 }

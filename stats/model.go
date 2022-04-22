@@ -36,8 +36,7 @@ type BlockDevice struct {
 type CgroupStats struct {
 	Name string
 	// CPU
-	UserCPU float64
-	KernelCPU float64
+	CPU float64
 	ThrottlePeriods uint64
 	TotalPeriods uint64
 	// Memory
