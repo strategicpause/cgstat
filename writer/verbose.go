@@ -84,19 +84,14 @@ func (c *CgStatsVerboseWriter) printCounter(name string, value uint64) {
 func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
 	fmt.Fprintln(c.writer, "CPU Stats")
 
-	throttling := 0.0
-	if cgstats.TotalPeriods != 0 {
-		throttling = float64(cgstats.ThrottlePeriods) / float64(cgstats.TotalPeriods) * 100.0
-	}
-
 	c.printCpuStat("CPU", cgstats.CPU)
-	c.printCpuStat("ThrottlePeriods", throttling)
+	c.printCounter("ThrottlePeriods", cgstats.ThrottlePeriods)
+	c.printCounter("TotalPeriods", cgstats.TotalPeriods)
 }
 
 func (c *CgStatsVerboseWriter) printCpuStat(name string, value float64) {
 	fmt.Fprintf(c.writer,"\t%s:%s%.2f%%\n", name, c.getTabs(name), value)
 }
-
 
 func (c *CgStatsVerboseWriter) printBlkIOStats(cgstats *stats.CgroupStats) {
 	c.printBlkIOStat("IoWaitTime", cgstats.IoWaitTimeRecursive)

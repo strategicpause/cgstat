@@ -69,18 +69,16 @@ func (c *CgroupStatsController) Start() error {
 	// Clear Screen
 	fmt.Print("\033[H\033[2J")
 
-	for {
-		select {
-			case <-c.ticker.C:
-				err := c.writeStats()
-				if err != nil {
-					return err
-				}
-				if !c.followMode {
-					return nil
-				}
+	for range c.ticker.C {
+		err := c.writeStats()
+		if err != nil {
+			return err
+		}
+		if !c.followMode {
+			return nil
 		}
 	}
+	return nil
 }
 
 func (c *CgroupStatsController) writeStats() error {
