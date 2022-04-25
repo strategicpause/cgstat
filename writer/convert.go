@@ -50,6 +50,6 @@ func ToDisplayRow(cgStats *stats.CgroupStats) []interface{} {
 	dirtySize := FormatBytes(cgStats.DirtySize)
 	writeback := FormatBytes(cgStats.WriteBack)
 
-	return []interface{} { cgStats.Name, CPU, currentUsage, maxUsage, usageLimit, rss,
+	return []interface{} { cgStats.Name, CPU, cgStats.NumProcesses, currentUsage, maxUsage, usageLimit, rss,
 		cacheSize, dirtySize, writeback, cgStats.UnderOom, cgStats.OomKill }
 }

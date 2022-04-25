@@ -85,6 +85,7 @@ func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
 	fmt.Fprintln(c.writer, "CPU Stats")
 
 	c.printCpuStat("CPU", cgstats.CPU)
+	c.printCounter("NumProcesses", cgstats.NumProcesses)
 	c.printCounter("ThrottlePeriods", cgstats.ThrottlePeriods)
 	c.printCounter("TotalPeriods", cgstats.TotalPeriods)
 }

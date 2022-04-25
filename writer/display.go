@@ -22,7 +22,7 @@ func NewCgStatsDisplayWriter() StatsWriter {
 }
 
 func (c *CgStatsDisplayWriter) Write(cgroupStats []*stats.CgroupStats) error {
-	tbl := table.New("Name", "CPU", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
+	tbl := table.New("Name", "CPU", "NumProcesses", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
 		"Cache", "Dirty", "WriteBack", "UnderOom", "OomKill")
 	tbl.WithWriter(c.writer)
 

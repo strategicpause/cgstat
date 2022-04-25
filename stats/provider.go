@@ -107,6 +107,7 @@ func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups
 		cgStats.CPU += stat.CPU
 	}
 
+	cgStats.NumProcesses = uint64(len(processes))
 	cgStats.ThrottlePeriods = cpuMetrics.Throttling.ThrottledPeriods
 	cgStats.TotalPeriods = cpuMetrics.Throttling.Periods
 

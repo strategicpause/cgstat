@@ -40,6 +40,7 @@ type CgroupStats struct {
 	// The total CPU throttled time
 	ThrottlePeriods uint64
 	TotalPeriods uint64
+	NumProcesses uint64
 	/** Memory **/
 	CurrentUsage uint64
 	UsageLimit uint64
