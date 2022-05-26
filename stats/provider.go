@@ -15,7 +15,6 @@ const (
 )
 
 type CgroupStatsProvider struct {
-
 }
 
 const (
@@ -54,7 +53,7 @@ func (c *CgroupStatsProvider) getPathsByPrefix(prefix string) ([]string, error) 
 }
 
 func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) ([]*CgroupStats, error) {
-	paths := []string {name}
+	paths := []string{name}
 
 	return c.getCgroupStatsByPath(paths)
 }
@@ -81,10 +80,10 @@ func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup
 	if err != nil {
 		return nil, err
 	}
-	cgStats := &CgroupStats {
-		Name:               name,
-		UnderOom:           metrics.MemoryOomControl.UnderOom,
-		OomKill:            metrics.MemoryOomControl.OomKill,
+	cgStats := &CgroupStats{
+		Name:     name,
+		UnderOom: metrics.MemoryOomControl.UnderOom,
+		OomKill:  metrics.MemoryOomControl.OomKill,
 	}
 
 	err = c.withCpuStats(cgStats, control, metrics.CPU)
@@ -103,7 +102,10 @@ func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups
 		return err
 	}
 	for _, proc := range processes {
-		stat, _ := pidusage.GetStat(proc.Pid)
+		stat, pidErr := pidusage.GetStat(proc.Pid)
+		if pidErr != nil {
+			return pidErr
+		}
 		cgStats.CPU += stat.CPU
 	}
 
@@ -114,7 +116,7 @@ func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups
 	return nil
 }
 
-func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats,  memMetrics *v1.MemoryStat) {
+func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats, memMetrics *v1.MemoryStat) {
 	cgStats.CurrentUsage = memMetrics.Usage.Usage
 	cgStats.UsageLimit = memMetrics.Usage.Limit
 	cgStats.CurrentUtilization = float64(memMetrics.Usage.Usage) / float64(memMetrics.Usage.Limit) * 100.0

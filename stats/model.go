@@ -5,11 +5,11 @@ import (
 )
 
 type CgstatArgs struct {
-	CgroupName string
-	CgroupPrefix string
-	VerboseOutput bool
-	OutputFile string
-	FollowMode bool
+	CgroupName      string
+	CgroupPrefix    string
+	VerboseOutput   bool
+	OutputFile      string
+	FollowMode      bool
 	RefreshInterval float64
 }
 
@@ -26,10 +26,10 @@ func (c *CgstatArgs) GetRefreshInterval() time.Duration {
 }
 
 type BlockDevice struct {
-	Read uint64
+	Read  uint64
 	Write uint64
 	Async uint64
-	Sync uint64
+	Sync  uint64
 	Total uint64
 }
 
@@ -39,25 +39,25 @@ type CgroupStats struct {
 	CPU float64
 	// The total CPU throttled time
 	ThrottlePeriods uint64
-	TotalPeriods uint64
-	NumProcesses uint64
+	TotalPeriods    uint64
+	NumProcesses    uint64
 	/** Memory **/
-	CurrentUsage uint64
-	UsageLimit uint64
+	CurrentUsage       uint64
+	UsageLimit         uint64
 	CurrentUtilization float64
-	MaxUsage uint64
-	MaxUtilization float64
+	MaxUsage           uint64
+	MaxUtilization     float64
 	// Number of bytes of anonymous and swap cache memory (includes transparent hugepages).
 	Rss uint64
 	// Number of bytes of anonymous transparent hugepages.
-	RssHuge uint64
-	KernelUsage uint64
-	KernelMaxUsage uint64
+	RssHuge          uint64
+	KernelUsage      uint64
+	KernelMaxUsage   uint64
 	KernelUsageLimit uint64
-	KernelTCPUsage uint64
-	KernelTCPMax uint64
-	KernelTCPLimit uint64
-	CacheSize uint64
+	KernelTCPUsage   uint64
+	KernelTCPMax     uint64
+	KernelTCPLimit   uint64
+	CacheSize        uint64
 	// The total amount of memory waiting to be written back to the disk.
 	DirtySize uint64
 	// The total amount of memory actively being written back to the disk.
