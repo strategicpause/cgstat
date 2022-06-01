@@ -1,9 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/strategicpause/cgstat/stats"
 	"github.com/strategicpause/cgstat/writer"
-	"fmt"
 	"time"
 )
 
@@ -16,11 +16,11 @@ type Controller interface {
 type CgroupStatsProviderFn func() ([]*stats.CgroupStats, error)
 
 type CgroupStatsController struct {
-	displayWriter writer.StatsWriter
-	csvWriter writer.StatsWriter
+	displayWriter   writer.StatsWriter
+	csvWriter       writer.StatsWriter
 	statsProviderFn CgroupStatsProviderFn
-	followMode bool
-	ticker *time.Ticker
+	followMode      bool
+	ticker          *time.Ticker
 }
 
 func NewCgroupStatsController(args *stats.CgstatArgs) (Controller, error) {
@@ -30,11 +30,11 @@ func NewCgroupStatsController(args *stats.CgstatArgs) (Controller, error) {
 	}
 
 	return &CgroupStatsController{
-		displayWriter: getDisplayWriter(args),
-		csvWriter: csvWriter,
+		displayWriter:   getDisplayWriter(args),
+		csvWriter:       csvWriter,
 		statsProviderFn: getStatsProvider(args),
-		followMode: args.FollowMode,
-		ticker: time.NewTicker(args.GetRefreshInterval()),
+		followMode:      args.FollowMode,
+		ticker:          time.NewTicker(args.GetRefreshInterval()),
 	}, nil
 }
 
@@ -71,10 +71,11 @@ func (c *CgroupStatsController) Start() error {
 
 	for range c.ticker.C {
 		err := c.writeStats()
-		if err != nil {
+
+		// Break out of this loop only when not in follow mode.
+		if err != nil && !c.followMode {
 			return err
-		}
-		if !c.followMode {
+		} else if !c.followMode {
 			return nil
 		}
 	}

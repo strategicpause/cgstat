@@ -21,10 +21,9 @@ func FormatBytes(bytes uint64) string {
 		float64(bytes)/float64(div), "KMGTPE"[exp])
 }
 
-
 func ToCsvRow(cgStats *stats.CgroupStats) []string {
-	t, _  := time.Now().UTC().MarshalText()
-	return []string {
+	t, _ := time.Now().UTC().MarshalText()
+	return []string{
 		string(t),
 		cgStats.Name,
 		fmt.Sprintf("%f", cgStats.CPU),
@@ -50,6 +49,6 @@ func ToDisplayRow(cgStats *stats.CgroupStats) []interface{} {
 	dirtySize := FormatBytes(cgStats.DirtySize)
 	writeback := FormatBytes(cgStats.WriteBack)
 
-	return []interface{} { cgStats.Name, CPU, cgStats.NumProcesses, currentUsage, maxUsage, usageLimit, rss,
-		cacheSize, dirtySize, writeback, cgStats.UnderOom, cgStats.OomKill }
+	return []interface{}{cgStats.Name, CPU, cgStats.NumProcesses, currentUsage, maxUsage, usageLimit, rss,
+		cacheSize, dirtySize, writeback, cgStats.UnderOom, cgStats.OomKill}
 }

@@ -51,7 +51,7 @@ func (c *CgStatsVerboseWriter) printMemStats(cgstats *stats.CgroupStats) {
 	c.printMemStat("InactiveFile", cgstats.InactiveFile)
 	c.printMemStat("Unevictable", cgstats.Unevictable)
 	c.printMemUtilization("KernelUsage", cgstats.KernelUsage, cgstats.KernelUsageLimit)
-	c.printMemUtilization("KernelMax", cgstats.KernelMaxUsage,cgstats.KernelUsageLimit)
+	c.printMemUtilization("KernelMax", cgstats.KernelMaxUsage, cgstats.KernelUsageLimit)
 	c.printMemUtilization("KernelTCPUsage", cgstats.KernelTCPUsage, cgstats.KernelTCPLimit)
 	c.printMemUtilization("KernelTCPMax", cgstats.KernelTCPMax, cgstats.KernelTCPLimit)
 }
@@ -62,24 +62,23 @@ func (c *CgStatsVerboseWriter) printMemUtilization(name string, value uint64, ma
 		percentage = float64(value) / float64(maxValue) * 100.0
 	}
 
-	fmt.Fprintf(c.writer,"\t%s:%s%v / %v (%.2f%%)\n", name, c.getTabs(name), FormatBytes(value), FormatBytes(maxValue), percentage)
+	fmt.Fprintf(c.writer, "\t%s:%s%v / %v (%.2f%%)\n", name, c.getTabs(name), FormatBytes(value), FormatBytes(maxValue), percentage)
 }
 
 func (c *CgStatsVerboseWriter) getTabs(name string) string {
-	if len(name) < 7  {
+	if len(name) < 7 {
 		return "\t\t"
 	}
 	return "\t"
 }
 
 func (c *CgStatsVerboseWriter) printMemStat(name string, value uint64) {
-	fmt.Fprintf(c.writer,"\t%s:%s%v\n", name, c.getTabs(name), FormatBytes(value))
+	fmt.Fprintf(c.writer, "\t%s:%s%v\n", name, c.getTabs(name), FormatBytes(value))
 }
 
 func (c *CgStatsVerboseWriter) printCounter(name string, value uint64) {
-	fmt.Fprintf(c.writer,"\t%s:%s%d\n", name, c.getTabs(name), value)
+	fmt.Fprintf(c.writer, "\t%s:%s%d\n", name, c.getTabs(name), value)
 }
-
 
 func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
 	fmt.Fprintln(c.writer, "CPU Stats")
@@ -91,18 +90,18 @@ func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
 }
 
 func (c *CgStatsVerboseWriter) printCpuStat(name string, value float64) {
-	fmt.Fprintf(c.writer,"\t%s:%s%.2f%%\n", name, c.getTabs(name), value)
+	fmt.Fprintf(c.writer, "\t%s:%s%.2f%%\n", name, c.getTabs(name), value)
 }
 
 func (c *CgStatsVerboseWriter) printBlkIOStats(cgstats *stats.CgroupStats) {
 	c.printBlkIOStat("IoWaitTime", cgstats.IoWaitTimeRecursive)
 	c.printBlkIOStat("IoTimeRecursive", cgstats.IoTimeRecursive)
 	c.printBlkIOStat("IoQueuedRecursive", cgstats.IoQueuedRecursive)
-	c.printBlkIOStat( "IoMergedRecursive", cgstats.IoMergedRecursive)
-	c.printBlkIOStat( "IoServiceBytesRecursive", cgstats.IoServiceBytesRecursive)
-	c.printBlkIOStat( "IoServiceTimeRecursive", cgstats.IoServiceTimeRecursive)
-	c.printBlkIOStat( "SectorsRecursive", cgstats.SectorsRecursive)
-	c.printBlkIOStat( "IoServicedRecursive", cgstats.IoServicedRecursive)
+	c.printBlkIOStat("IoMergedRecursive", cgstats.IoMergedRecursive)
+	c.printBlkIOStat("IoServiceBytesRecursive", cgstats.IoServiceBytesRecursive)
+	c.printBlkIOStat("IoServiceTimeRecursive", cgstats.IoServiceTimeRecursive)
+	c.printBlkIOStat("SectorsRecursive", cgstats.SectorsRecursive)
+	c.printBlkIOStat("IoServicedRecursive", cgstats.IoServicedRecursive)
 }
 
 func (c *CgStatsVerboseWriter) printBlkIOStat(name string, devices map[string]*stats.BlockDevice) {
@@ -110,7 +109,7 @@ func (c *CgStatsVerboseWriter) printBlkIOStat(name string, devices map[string]*s
 		return
 	}
 
-	fmt.Fprintf(c.writer,"%s:\n", name)
+	fmt.Fprintf(c.writer, "%s:\n", name)
 
 	// Print values
 	keys := make([]string, 0, len(devices))
@@ -120,7 +119,7 @@ func (c *CgStatsVerboseWriter) printBlkIOStat(name string, devices map[string]*s
 	sort.Strings(keys)
 	for _, deviceName := range keys {
 		device := devices[deviceName]
-		fmt.Fprintf(c.writer,"\t%s:\t%v (Read) %v (Write) %v (Sync) %v (Async) %v (Total)\n",
+		fmt.Fprintf(c.writer, "\t%s:\t%v (Read) %v (Write) %v (Sync) %v (Async) %v (Total)\n",
 			deviceName, device.Read, device.Write, device.Sync, device.Async, device.Total)
 	}
 }
