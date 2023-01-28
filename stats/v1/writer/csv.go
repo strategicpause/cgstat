@@ -1,18 +1,18 @@
 package writer
 
 import (
-	"github.com/strategicpause/cgstat/stats"
-
 	"encoding/csv"
 	"os"
+
+	"github.com/strategicpause/cgstat/stats/v1"
 )
 
 type CgroupStatsCsvWriter struct {
 	writer *csv.Writer
 }
 
-func NewCgroupStatsCsvWriter(args *stats.CgstatArgs) (*CgroupStatsCsvWriter, error) {
-	fileWriter, err := os.Create(args.OutputFile)
+func NewCgroupStatsCsvWriter(filename string) (*CgroupStatsCsvWriter, error) {
+	fileWriter, err := os.Create(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -30,14 +30,14 @@ func NewCgroupStatsCsvWriter(args *stats.CgstatArgs) (*CgroupStatsCsvWriter, err
 }
 
 func (c *CgroupStatsCsvWriter) addHeader() error {
-	header := []string{"Time", "Name", "UserCPU", "KernelCPU", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
+	header := []string{"Time", "Name", "UserCPU", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
 		"Cache", "Dirty", "WriteBack", "UnderOom", "OomKill"}
 	return c.writer.Write(header)
 }
 
-func (c *CgroupStatsCsvWriter) Write(cgroupStats []*stats.CgroupStats) error {
+func (c *CgroupStatsCsvWriter) Write(cgroupStats []*v1.CgroupStats) error {
 	for _, s := range cgroupStats {
-		err := c.writer.Write(ToCsvRow(s))
+		err := c.writer.Write(s.ToCsvRow())
 		if err != nil {
 			return err
 		}

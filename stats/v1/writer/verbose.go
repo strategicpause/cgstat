@@ -2,6 +2,7 @@ package writer
 
 import (
 	"github.com/strategicpause/cgstat/stats"
+	"github.com/strategicpause/cgstat/stats/v1"
 
 	"fmt"
 	"github.com/gosuri/uilive"
@@ -21,7 +22,7 @@ func NewCgroupStatsVerboseWriter() StatsWriter {
 	}
 }
 
-func (c *CgStatsVerboseWriter) Write(cgStats []*stats.CgroupStats) error {
+func (c *CgStatsVerboseWriter) Write(cgStats []*v1.CgroupStats) error {
 	for _, s := range cgStats {
 		c.printMemStats(s)
 		c.printCPUStats(s)
@@ -31,7 +32,7 @@ func (c *CgStatsVerboseWriter) Write(cgStats []*stats.CgroupStats) error {
 	return nil
 }
 
-func (c *CgStatsVerboseWriter) printMemStats(cgstats *stats.CgroupStats) {
+func (c *CgStatsVerboseWriter) printMemStats(cgstats *v1.CgroupStats) {
 	fmt.Fprintln(c.writer, "Memory Stats")
 
 	c.printMemUtilization("Usage", cgstats.CurrentUsage, cgstats.UsageLimit)
@@ -62,7 +63,7 @@ func (c *CgStatsVerboseWriter) printMemUtilization(name string, value uint64, ma
 		percentage = float64(value) / float64(maxValue) * 100.0
 	}
 
-	fmt.Fprintf(c.writer, "\t%s:%s%v / %v (%.2f%%)\n", name, c.getTabs(name), FormatBytes(value), FormatBytes(maxValue), percentage)
+	fmt.Fprintf(c.writer, "\t%s:%s%v / %v (%.2f%%)\n", name, c.getTabs(name), stats.FormatBytes(value), stats.FormatBytes(maxValue), percentage)
 }
 
 func (c *CgStatsVerboseWriter) getTabs(name string) string {
@@ -73,14 +74,14 @@ func (c *CgStatsVerboseWriter) getTabs(name string) string {
 }
 
 func (c *CgStatsVerboseWriter) printMemStat(name string, value uint64) {
-	fmt.Fprintf(c.writer, "\t%s:%s%v\n", name, c.getTabs(name), FormatBytes(value))
+	fmt.Fprintf(c.writer, "\t%s:%s%v\n", name, c.getTabs(name), stats.FormatBytes(value))
 }
 
 func (c *CgStatsVerboseWriter) printCounter(name string, value uint64) {
 	fmt.Fprintf(c.writer, "\t%s:%s%d\n", name, c.getTabs(name), value)
 }
 
-func (c *CgStatsVerboseWriter) printCPUStats(cgstats *stats.CgroupStats) {
+func (c *CgStatsVerboseWriter) printCPUStats(cgstats *v1.CgroupStats) {
 	fmt.Fprintln(c.writer, "CPU Stats")
 
 	c.printCpuStat("CPU", cgstats.CPU)
@@ -93,7 +94,7 @@ func (c *CgStatsVerboseWriter) printCpuStat(name string, value float64) {
 	fmt.Fprintf(c.writer, "\t%s:%s%.2f%%\n", name, c.getTabs(name), value)
 }
 
-func (c *CgStatsVerboseWriter) printBlkIOStats(cgstats *stats.CgroupStats) {
+func (c *CgStatsVerboseWriter) printBlkIOStats(cgstats *v1.CgroupStats) {
 	c.printBlkIOStat("IoWaitTime", cgstats.IoWaitTimeRecursive)
 	c.printBlkIOStat("IoTimeRecursive", cgstats.IoTimeRecursive)
 	c.printBlkIOStat("IoQueuedRecursive", cgstats.IoQueuedRecursive)
@@ -104,7 +105,7 @@ func (c *CgStatsVerboseWriter) printBlkIOStats(cgstats *stats.CgroupStats) {
 	c.printBlkIOStat("IoServicedRecursive", cgstats.IoServicedRecursive)
 }
 
-func (c *CgStatsVerboseWriter) printBlkIOStat(name string, devices map[string]*stats.BlockDevice) {
+func (c *CgStatsVerboseWriter) printBlkIOStat(name string, devices map[string]*v1.BlockDevice) {
 	if len(devices) == 0 {
 		return
 	}

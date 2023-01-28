@@ -1,17 +1,12 @@
-package stats
+package v1
 
 import (
 	"github.com/containerd/cgroups"
 	v1 "github.com/containerd/cgroups/stats/v1"
 	"github.com/struCoder/pidusage"
-	"io/ioutil"
+	"log"
+	"os"
 	"path/filepath"
-	"time"
-)
-
-const (
-	// CPURefreshInterval determines how often to refresh CPU metrics
-	CPURefreshInterval = 100 * time.Millisecond
 )
 
 type CgroupStatsProvider struct {
@@ -26,30 +21,35 @@ func NewCgroupStatsProvider() *CgroupStatsProvider {
 }
 
 func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) ([]*CgroupStats, error) {
-	paths, err := c.getPathsByPrefix(prefix)
-	if err != nil {
-		return nil, err
-	}
+	paths := c.ListCgroupsByPrefix(prefix)
 	return c.getCgroupStatsByPath(paths)
 }
 
-func (c *CgroupStatsProvider) getPathsByPrefix(prefix string) ([]string, error) {
+func (c *CgroupStatsProvider) ListCgroupsByPrefix(cgroupPrefix string) []string {
 	var cgroupPaths []string
+	queue := []string{cgroupPrefix}
 
-	prefixPath := filepath.Join(CgroupPrefix, prefix)
+	for len(queue) > 0 {
+		prefix := queue[0]
+		queue = queue[1:]
 
-	files, err := ioutil.ReadDir(prefixPath)
-	if err != nil {
-		return nil, err
-	}
-	for _, file := range files {
-		if file.IsDir() {
-			cgroupPath := filepath.Join(prefix, file.Name())
-			cgroupPaths = append(cgroupPaths, cgroupPath)
+		prefixPath := filepath.Join(CgroupPrefix, prefix)
+		files, err := os.ReadDir(prefixPath)
+		if err != nil {
+			log.Println(err)
+		}
+
+		for _, file := range files {
+			if file.IsDir() {
+				cgroupPath := filepath.Join(prefix, file.Name())
+				cgroupPaths = append(cgroupPaths, cgroupPath)
+				if prefix != cgroupPath {
+					queue = append(queue, cgroupPath)
+				}
+			}
 		}
 	}
-
-	return cgroupPaths, nil
+	return cgroupPaths
 }
 
 func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) ([]*CgroupStats, error) {
@@ -81,15 +81,14 @@ func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup
 		return nil, err
 	}
 	cgStats := &CgroupStats{
-		Name:     name,
-		UnderOom: metrics.MemoryOomControl.UnderOom,
-		OomKill:  metrics.MemoryOomControl.OomKill,
+		Name: name,
 	}
 
 	err = c.withCpuStats(cgStats, control, metrics.CPU)
 	if err != nil {
 		return nil, err
 	}
+	c.withMemoryOomControl(cgStats, metrics.MemoryOomControl)
 	c.withMemoryStats(cgStats, metrics.Memory)
 	c.withIOStats(cgStats, metrics.Blkio)
 
@@ -116,7 +115,19 @@ func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups
 	return nil
 }
 
+func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *CgroupStats, oomMetrics *v1.MemoryOomControl) {
+	if oomMetrics == nil {
+		return
+	}
+
+	cgStats.UnderOom = oomMetrics.UnderOom
+	cgStats.OomKill = oomMetrics.OomKill
+}
+
 func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats, memMetrics *v1.MemoryStat) {
+	if memMetrics == nil {
+		return
+	}
 	cgStats.CurrentUsage = memMetrics.Usage.Usage
 	cgStats.UsageLimit = memMetrics.Usage.Limit
 	cgStats.CurrentUtilization = float64(memMetrics.Usage.Usage) / float64(memMetrics.Usage.Limit) * 100.0
@@ -137,6 +148,9 @@ func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats, memMetrics *
 }
 
 func (c *CgroupStatsProvider) withIOStats(cgStats *CgroupStats, ioMetrics *v1.BlkIOStat) {
+	if ioMetrics == nil {
+		return
+	}
 	cgStats.IoServicedRecursive = c.getBlockDeviceStats(ioMetrics.IoServiceTimeRecursive)
 	cgStats.IoServiceBytesRecursive = c.getBlockDeviceStats(ioMetrics.IoServiceBytesRecursive)
 	cgStats.IoQueuedRecursive = c.getBlockDeviceStats(ioMetrics.IoQueuedRecursive)

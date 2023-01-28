@@ -2,17 +2,42 @@
 
 Cgstat is a tool for displaying stats about cgroups. 
 
-## Installation
+## Getting started
+Install `cgstat` on your local host using: 
+```bash
+make install
+```
+If you're a developer and want to test out changes that you're making,
+then build `cgstat` with the following command:
 
 ```bash
 make build
 ```
 
+Before submitting a pull request, be sure to run
+
+```bash
+make release
+```
+
 ## Usage
 
-```python
+### Listing cgroups on a host
+~~~~
+$ cgstat list
+~~~~
+
+### Listing cgroups by prefix
+If you're only interested in a subset of cgroups, then you can filter them by
+prefix using the `--prefix` parameter.
+~~~~
+$ cgstat list --prefix=
+~~~~
+
+### Viewing cgroups on a host
+```
 # View stats on a specific cgroup
-$ cgstat --name=/system.slice/sshd.service 
+$ cgstat view --name=/system.slice/sshd.service 
 Name                        UserCPU  KernelCPU  CurrentUsage      MaxUsage          UsageLimit  RSS        Cache      Dirty  WriteBack  UnderOom  OomKill  
 /system.slice/sshd.service  53.67%   42.19%     27.7 MiB (0.00%)  31.3 MiB (0.00%)  8.0 EiB     908.0 KiB  132.0 KiB  0 B    0 B        0         0
 
@@ -23,7 +48,7 @@ cgstat --name=/system.slice/sshd.service --verbose
 $ cgstat --prefix=/system.slice
 
 # Follow updates in real time
-$ cgstat --prefix=/system.slice --follow
+$ cgstat --prefix=/system.slice --follow 
 ```
 
 ## Contributing

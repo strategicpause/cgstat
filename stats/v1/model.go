@@ -1,28 +1,13 @@
-package stats
+package v1
 
 import (
+	"fmt"
+	"github.com/strategicpause/cgstat/stats"
 	"time"
 )
 
-type CgstatArgs struct {
-	CgroupName      string
-	CgroupPrefix    string
-	VerboseOutput   bool
-	OutputFile      string
-	FollowMode      bool
-	RefreshInterval float64
-}
-
-func (c *CgstatArgs) HasPrefix() bool {
-	return c.CgroupPrefix != ""
-}
-
-func (c *CgstatArgs) HasOutputFile() bool {
-	return c.OutputFile != ""
-}
-
-func (c *CgstatArgs) GetRefreshInterval() time.Duration {
-	return time.Duration(c.RefreshInterval * float64(time.Second))
+type Cgroup struct {
+	Name string
 }
 
 type BlockDevice struct {
@@ -104,4 +89,36 @@ type CgroupStats struct {
 	SectorsRecursive map[string]*BlockDevice
 	// The number of IOs (bio) issued to the disk by the group.
 	IoServicedRecursive map[string]*BlockDevice
+}
+
+func (c *CgroupStats) ToCsvRow() []string {
+	t, _ := time.Now().UTC().MarshalText()
+	return []string{
+		string(t),
+		c.Name,
+		fmt.Sprintf("%f", c.CPU),
+		fmt.Sprintf("%d", c.CurrentUsage),
+		fmt.Sprintf("%d", c.MaxUsage),
+		fmt.Sprintf("%d", c.UsageLimit),
+		fmt.Sprintf("%d", c.Rss),
+		fmt.Sprintf("%d", c.CacheSize),
+		fmt.Sprintf("%d", c.DirtySize),
+		fmt.Sprintf("%d", c.WriteBack),
+		fmt.Sprintf("%d", c.UnderOom),
+		fmt.Sprintf("%d", c.OomKill),
+	}
+}
+
+func (c *CgroupStats) ToDisplayRow() []interface{} {
+	CPU := fmt.Sprintf("%.2f%%", c.CPU)
+	currentUsage := fmt.Sprintf("%s (%.2f%%)", stats.FormatBytes(c.CurrentUsage), c.CurrentUtilization)
+	maxUsage := fmt.Sprintf("%s (%.2f%%)", stats.FormatBytes(c.MaxUsage), c.MaxUtilization)
+	usageLimit := stats.FormatBytes(c.UsageLimit)
+	rss := stats.FormatBytes(c.Rss)
+	cacheSize := stats.FormatBytes(c.CacheSize)
+	dirtySize := stats.FormatBytes(c.DirtySize)
+	writeback := stats.FormatBytes(c.WriteBack)
+
+	return []interface{}{c.Name, CPU, c.NumProcesses, currentUsage, maxUsage, usageLimit, rss,
+		cacheSize, dirtySize, writeback, c.UnderOom, c.OomKill}
 }

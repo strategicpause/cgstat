@@ -1,10 +1,17 @@
 package writer
 
 import (
-	"github.com/strategicpause/cgstat/stats"
+	"github.com/strategicpause/cgstat/stats/v1"
 
 	"github.com/gosuri/uilive"
 	"github.com/rodaine/table"
+)
+
+type DisplayVerbosity int
+
+const (
+	Normal  DisplayVerbosity = 0
+	Verbose DisplayVerbosity = 1
 )
 
 // CgStatsDisplayWriter will display stats for a set of cgroups to the screen
@@ -21,13 +28,13 @@ func NewCgStatsDisplayWriter() StatsWriter {
 	}
 }
 
-func (c *CgStatsDisplayWriter) Write(cgroupStats []*stats.CgroupStats) error {
+func (c *CgStatsDisplayWriter) Write(cgroupStats []*v1.CgroupStats) error {
 	tbl := table.New("Name", "CPU", "NumProcesses", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
 		"Cache", "Dirty", "WriteBack", "UnderOom", "OomKill")
 	tbl.WithWriter(c.writer)
 
 	for _, cgStats := range cgroupStats {
-		row := ToDisplayRow(cgStats)
+		row := cgStats.ToDisplayRow()
 		// Write to display
 		tbl.AddRow(row...)
 	}
