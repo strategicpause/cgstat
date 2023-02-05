@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"github.com/containerd/cgroups"
 	"github.com/strategicpause/cgstat/stats/common"
 	v1 "github.com/strategicpause/cgstat/stats/v1"
 	v2 "github.com/strategicpause/cgstat/stats/v2"
@@ -14,5 +15,5 @@ func NewCgroupStatsProvider() common.CgroupStatsProvider {
 }
 
 func isCgroupsV2Enabled() bool {
-	return true
+	return cgroups.Mode() == cgroups.Unified
 }

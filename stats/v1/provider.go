@@ -5,12 +5,10 @@ import (
 	v1 "github.com/containerd/cgroups/stats/v1"
 	"github.com/strategicpause/cgstat/stats/common"
 	"github.com/struCoder/pidusage"
-	"log"
-	"os"
-	"path/filepath"
 )
 
 type CgroupStatsProvider struct {
+	commonProvider *common.CommonCgroupStatsProvider
 }
 
 const (
@@ -18,7 +16,9 @@ const (
 )
 
 func NewCgroupStatsProvider() *CgroupStatsProvider {
-	return &CgroupStatsProvider{}
+	return &CgroupStatsProvider{
+		commonProvider: common.NewCommonCgroupStatsProvider(CgroupPrefix),
+	}
 }
 
 func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) ([]*common.CgroupStats, error) {
@@ -27,30 +27,7 @@ func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) ([]*common.C
 }
 
 func (c *CgroupStatsProvider) ListCgroupsByPrefix(cgroupPrefix string) []string {
-	var cgroupPaths []string
-	queue := []string{cgroupPrefix}
-
-	for len(queue) > 0 {
-		prefix := queue[0]
-		queue = queue[1:]
-
-		prefixPath := filepath.Join(CgroupPrefix, prefix)
-		files, err := os.ReadDir(prefixPath)
-		if err != nil {
-			log.Println(err)
-		}
-
-		for _, file := range files {
-			if file.IsDir() {
-				cgroupPath := filepath.Join(prefix, file.Name())
-				cgroupPaths = append(cgroupPaths, cgroupPath)
-				if prefix != cgroupPath {
-					queue = append(queue, cgroupPath)
-				}
-			}
-		}
-	}
-	return cgroupPaths
+	return c.commonProvider.ListCgroupsByPrefix(cgroupPrefix)
 }
 
 func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) ([]*common.CgroupStats, error) {

@@ -23,9 +23,16 @@ func (c *CgroupStatsProvider) ListCgroupsByPrefix(cgroupPrefix string) []string 
 }
 
 func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) ([]*common.CgroupStats, error) {
-	return nil, nil
+	paths := c.ListCgroupsByPrefix(prefix)
+	return c.getCgroupStatsByPath(paths)
 }
 
 func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) ([]*common.CgroupStats, error) {
+	paths := []string{name}
+
+	return c.getCgroupStatsByPath(paths)
+}
+
+func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) ([]*common.CgroupStats, error) {
 	return nil, nil
 }
