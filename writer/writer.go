@@ -2,18 +2,7 @@ package writer
 
 import (
 	"fmt"
-	"github.com/strategicpause/cgstat/stats/common"
 )
-
-type StatsWriter interface {
-	Write(cgroupStats []*common.CgroupStats) error
-}
-
-func NewListWriters() []StatsWriter {
-	return nil
-}
-
-type ViewWriterOptions func() (StatsWriter, error)
 
 func WithCSVWriter(filename string) ViewWriterOptions {
 	return func() (StatsWriter, error) {

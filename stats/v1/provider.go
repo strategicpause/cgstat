@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"github.com/containerd/cgroups"
-	v1 "github.com/containerd/cgroups/stats/v1"
+	cgroups "github.com/containerd/cgroups/v3/cgroup1"
+	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	"github.com/strategicpause/cgstat/stats/common"
 	"github.com/struCoder/pidusage"
 )
@@ -21,7 +21,7 @@ func NewCgroupStatsProvider() *CgroupStatsProvider {
 	}
 }
 
-func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) ([]*common.CgroupStats, error) {
+func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) (common.CgroupStatsCollection, error) {
 	paths := c.ListCgroupsByPrefix(prefix)
 	return c.getCgroupStatsByPath(paths)
 }
@@ -30,20 +30,20 @@ func (c *CgroupStatsProvider) ListCgroupsByPrefix(cgroupPrefix string) []string 
 	return c.commonProvider.ListCgroupsByPrefix(cgroupPrefix)
 }
 
-func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) ([]*common.CgroupStats, error) {
+func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) (common.CgroupStatsCollection, error) {
 	paths := []string{name}
 
 	return c.getCgroupStatsByPath(paths)
 }
 
-func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) ([]*common.CgroupStats, error) {
-	var stats []*common.CgroupStats
-	for _, cgroup := range cgroupPaths {
-		control, err := cgroups.Load(cgroups.V1, cgroups.StaticPath(cgroup))
+func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common.CgroupStatsCollection, error) {
+	var stats CgroupStatsCollection
+	for _, cgroupPath := range cgroupPaths {
+		control, err := cgroups.Load(cgroups.StaticPath(cgroupPath))
 		if err != nil {
 			return nil, err
 		}
-		cgroupStats, err := c.getCgroupStats(cgroup, control)
+		cgroupStats, err := c.getCgroupStats(cgroupPath, control)
 		if err != nil {
 			return nil, err
 		}
@@ -52,13 +52,13 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) ([]*com
 	return stats, nil
 }
 
-func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (*common.CgroupStats, error) {
+func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (common.CgroupStats, error) {
 	metrics, err := control.Stat(cgroups.IgnoreNotExist)
 
 	if err != nil {
 		return nil, err
 	}
-	cgStats := &common.CgroupStats{
+	cgStats := &CgroupStats{
 		Name: name,
 	}
 
@@ -73,7 +73,7 @@ func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup
 	return cgStats, nil
 }
 
-func (c *CgroupStatsProvider) withCpuStats(cgStats *common.CgroupStats, control cgroups.Cgroup, cpuMetrics *v1.CPUStat) error {
+func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups.Cgroup, cpuMetrics *v1.CPUStat) error {
 	processes, err := control.Processes("cpu", true)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (c *CgroupStatsProvider) withCpuStats(cgStats *common.CgroupStats, control 
 	return nil
 }
 
-func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *common.CgroupStats, oomMetrics *v1.MemoryOomControl) {
+func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *CgroupStats, oomMetrics *v1.MemoryOomControl) {
 	if oomMetrics == nil {
 		return
 	}
@@ -102,7 +102,7 @@ func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *common.CgroupStats, 
 	cgStats.OomKill = oomMetrics.OomKill
 }
 
-func (c *CgroupStatsProvider) withMemoryStats(cgStats *common.CgroupStats, memMetrics *v1.MemoryStat) {
+func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats, memMetrics *v1.MemoryStat) {
 	if memMetrics == nil {
 		return
 	}
@@ -125,7 +125,7 @@ func (c *CgroupStatsProvider) withMemoryStats(cgStats *common.CgroupStats, memMe
 	cgStats.WriteBack = memMetrics.Writeback
 }
 
-func (c *CgroupStatsProvider) withIOStats(cgStats *common.CgroupStats, ioMetrics *v1.BlkIOStat) {
+func (c *CgroupStatsProvider) withIOStats(cgStats *CgroupStats, ioMetrics *v1.BlkIOStat) {
 	if ioMetrics == nil {
 		return
 	}
@@ -139,13 +139,13 @@ func (c *CgroupStatsProvider) withIOStats(cgStats *common.CgroupStats, ioMetrics
 	cgStats.IoServiceTimeRecursive = c.getBlockDeviceStats(ioMetrics.IoServiceTimeRecursive)
 }
 
-func (c *CgroupStatsProvider) getBlockDeviceStats(entries []*v1.BlkIOEntry) map[string]*common.BlockDevice {
-	devices := make(map[string]*common.BlockDevice)
+func (c *CgroupStatsProvider) getBlockDeviceStats(entries []*v1.BlkIOEntry) map[string]*BlockDevice {
+	devices := make(map[string]*BlockDevice)
 	for _, entry := range entries {
 		deviceName := entry.Device
 		device, ok := devices[deviceName]
 		if !ok {
-			device = &common.BlockDevice{}
+			device = &BlockDevice{}
 			devices[deviceName] = device
 		}
 		switch entry.Op {

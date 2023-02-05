@@ -2,16 +2,16 @@ package view
 
 import (
 	"fmt"
+	"github.com/strategicpause/cgstat/stats"
 	"github.com/strategicpause/cgstat/stats/common"
+	"github.com/strategicpause/cgstat/writer"
 	"time"
 
-	"github.com/strategicpause/cgstat/stats/v1"
-	"github.com/strategicpause/cgstat/stats/v1/writer"
 	"github.com/urfave/cli"
 )
 
 // CgroupStatsProviderFn controls which set of CgroupStats are returned for a user request.
-type CgroupStatsProviderFn func() ([]*common.CgroupStats, error)
+type CgroupStatsProviderFn func() (common.CgroupStatsCollection, error)
 
 type Command struct {
 	writers         []writer.StatsWriter
@@ -64,14 +64,14 @@ func getWriters(args *Args) []writer.StatsWriter {
 }
 
 func getStatsProvider(args *Args) CgroupStatsProviderFn {
-	provider := v1.NewCgroupStatsProvider()
+	provider := stats.NewCgroupStatsProvider()
 
 	if args.HasPrefix() {
-		return func() ([]*common.CgroupStats, error) {
+		return func() (common.CgroupStatsCollection, error) {
 			return provider.GetCgroupStatsByPrefix(args.CgroupPrefix)
 		}
 	}
-	return func() ([]*common.CgroupStats, error) {
+	return func() (common.CgroupStatsCollection, error) {
 		return provider.GetCgroupStatsByName(args.CgroupName)
 	}
 }

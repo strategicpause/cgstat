@@ -1,7 +1,7 @@
 package stats
 
 import (
-	"github.com/containerd/cgroups"
+	"github.com/containerd/cgroups/v3"
 	"github.com/strategicpause/cgstat/stats/common"
 	v1 "github.com/strategicpause/cgstat/stats/v1"
 	v2 "github.com/strategicpause/cgstat/stats/v2"

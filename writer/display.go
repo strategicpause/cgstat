@@ -27,18 +27,15 @@ func NewCgStatsDisplayWriter() StatsWriter {
 	}
 }
 
-func (c *CgStatsDisplayWriter) Write(cgroupStats []*common.CgroupStats) error {
-	tbl := table.New("Name", "CPU", "NumProcesses", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
-		"Cache", "Dirty", "WriteBack", "UnderOom", "OomKill")
+func (c *CgStatsDisplayWriter) Write(cgroupStats common.CgroupStatsCollection) error {
+	tbl := table.New(cgroupStats.GetDisplayHeaders())
 	tbl.WithWriter(c.writer)
 
-	for _, cgStats := range cgroupStats {
+	for _, cgStats := range cgroupStats.GetCgroupStats() {
 		row := cgStats.ToDisplayRow()
 		// Write to display
 		tbl.AddRow(row...)
 	}
 	tbl.Print()
-	c.writer.Flush()
-
-	return nil
+	return c.writer.Flush()
 }
