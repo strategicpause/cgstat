@@ -2,11 +2,11 @@ package writer
 
 import (
 	"fmt"
-	"github.com/strategicpause/cgstat/stats/v1"
+	"github.com/strategicpause/cgstat/stats/common"
 )
 
 type StatsWriter interface {
-	Write(cgroupStats []*v1.CgroupStats) error
+	Write(cgroupStats []*common.CgroupStats) error
 }
 
 func NewListWriters() []StatsWriter {

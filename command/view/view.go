@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"github.com/strategicpause/cgstat/stats/common"
 	"time"
 
 	"github.com/strategicpause/cgstat/stats/v1"
@@ -10,7 +11,7 @@ import (
 )
 
 // CgroupStatsProviderFn controls which set of CgroupStats are returned for a user request.
-type CgroupStatsProviderFn func() ([]*v1.CgroupStats, error)
+type CgroupStatsProviderFn func() ([]*common.CgroupStats, error)
 
 type Command struct {
 	writers         []writer.StatsWriter
@@ -66,11 +67,11 @@ func getStatsProvider(args *Args) CgroupStatsProviderFn {
 	provider := v1.NewCgroupStatsProvider()
 
 	if args.HasPrefix() {
-		return func() ([]*v1.CgroupStats, error) {
+		return func() ([]*common.CgroupStats, error) {
 			return provider.GetCgroupStatsByPrefix(args.CgroupPrefix)
 		}
 	}
-	return func() ([]*v1.CgroupStats, error) {
+	return func() ([]*common.CgroupStats, error) {
 		return provider.GetCgroupStatsByName(args.CgroupName)
 	}
 }

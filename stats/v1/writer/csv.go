@@ -2,9 +2,8 @@ package writer
 
 import (
 	"encoding/csv"
+	"github.com/strategicpause/cgstat/stats/common"
 	"os"
-
-	"github.com/strategicpause/cgstat/stats/v1"
 )
 
 type CgroupStatsCsvWriter struct {
@@ -35,7 +34,7 @@ func (c *CgroupStatsCsvWriter) addHeader() error {
 	return c.writer.Write(header)
 }
 
-func (c *CgroupStatsCsvWriter) Write(cgroupStats []*v1.CgroupStats) error {
+func (c *CgroupStatsCsvWriter) Write(cgroupStats []*common.CgroupStats) error {
 	for _, s := range cgroupStats {
 		err := c.writer.Write(s.ToCsvRow())
 		if err != nil {

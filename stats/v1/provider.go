@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/containerd/cgroups"
 	v1 "github.com/containerd/cgroups/stats/v1"
+	"github.com/strategicpause/cgstat/stats/common"
 	"github.com/struCoder/pidusage"
 	"log"
 	"os"
@@ -20,7 +21,7 @@ func NewCgroupStatsProvider() *CgroupStatsProvider {
 	return &CgroupStatsProvider{}
 }
 
-func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) ([]*CgroupStats, error) {
+func (c *CgroupStatsProvider) GetCgroupStatsByPrefix(prefix string) ([]*common.CgroupStats, error) {
 	paths := c.ListCgroupsByPrefix(prefix)
 	return c.getCgroupStatsByPath(paths)
 }
@@ -52,14 +53,14 @@ func (c *CgroupStatsProvider) ListCgroupsByPrefix(cgroupPrefix string) []string 
 	return cgroupPaths
 }
 
-func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) ([]*CgroupStats, error) {
+func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) ([]*common.CgroupStats, error) {
 	paths := []string{name}
 
 	return c.getCgroupStatsByPath(paths)
 }
 
-func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) ([]*CgroupStats, error) {
-	var stats []*CgroupStats
+func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) ([]*common.CgroupStats, error) {
+	var stats []*common.CgroupStats
 	for _, cgroup := range cgroupPaths {
 		control, err := cgroups.Load(cgroups.V1, cgroups.StaticPath(cgroup))
 		if err != nil {
@@ -74,13 +75,13 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) ([]*Cgr
 	return stats, nil
 }
 
-func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (*CgroupStats, error) {
+func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (*common.CgroupStats, error) {
 	metrics, err := control.Stat(cgroups.IgnoreNotExist)
 
 	if err != nil {
 		return nil, err
 	}
-	cgStats := &CgroupStats{
+	cgStats := &common.CgroupStats{
 		Name: name,
 	}
 
@@ -95,7 +96,7 @@ func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup
 	return cgStats, nil
 }
 
-func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups.Cgroup, cpuMetrics *v1.CPUStat) error {
+func (c *CgroupStatsProvider) withCpuStats(cgStats *common.CgroupStats, control cgroups.Cgroup, cpuMetrics *v1.CPUStat) error {
 	processes, err := control.Processes("cpu", true)
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups
 	return nil
 }
 
-func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *CgroupStats, oomMetrics *v1.MemoryOomControl) {
+func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *common.CgroupStats, oomMetrics *v1.MemoryOomControl) {
 	if oomMetrics == nil {
 		return
 	}
@@ -124,7 +125,7 @@ func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *CgroupStats, oomMetr
 	cgStats.OomKill = oomMetrics.OomKill
 }
 
-func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats, memMetrics *v1.MemoryStat) {
+func (c *CgroupStatsProvider) withMemoryStats(cgStats *common.CgroupStats, memMetrics *v1.MemoryStat) {
 	if memMetrics == nil {
 		return
 	}
@@ -147,7 +148,7 @@ func (c *CgroupStatsProvider) withMemoryStats(cgStats *CgroupStats, memMetrics *
 	cgStats.WriteBack = memMetrics.Writeback
 }
 
-func (c *CgroupStatsProvider) withIOStats(cgStats *CgroupStats, ioMetrics *v1.BlkIOStat) {
+func (c *CgroupStatsProvider) withIOStats(cgStats *common.CgroupStats, ioMetrics *v1.BlkIOStat) {
 	if ioMetrics == nil {
 		return
 	}
@@ -161,13 +162,13 @@ func (c *CgroupStatsProvider) withIOStats(cgStats *CgroupStats, ioMetrics *v1.Bl
 	cgStats.IoServiceTimeRecursive = c.getBlockDeviceStats(ioMetrics.IoServiceTimeRecursive)
 }
 
-func (c *CgroupStatsProvider) getBlockDeviceStats(entries []*v1.BlkIOEntry) map[string]*BlockDevice {
-	devices := make(map[string]*BlockDevice)
+func (c *CgroupStatsProvider) getBlockDeviceStats(entries []*v1.BlkIOEntry) map[string]*common.BlockDevice {
+	devices := make(map[string]*common.BlockDevice)
 	for _, entry := range entries {
 		deviceName := entry.Device
 		device, ok := devices[deviceName]
 		if !ok {
-			device = &BlockDevice{}
+			device = &common.BlockDevice{}
 			devices[deviceName] = device
 		}
 		switch entry.Op {

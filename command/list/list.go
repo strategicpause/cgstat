@@ -3,7 +3,8 @@ package list
 import (
 	"fmt"
 
-	v1 "github.com/strategicpause/cgstat/stats/v1"
+	"github.com/strategicpause/cgstat/stats"
+
 	"github.com/urfave/cli"
 )
 
@@ -18,7 +19,7 @@ func Register() cli.Command {
 }
 
 func action(cCtx *cli.Context) error {
-	provider := v1.NewCgroupStatsProvider()
+	provider := stats.NewCgroupStatsProvider()
 
 	prefix := cCtx.String(ArgsPrefix)
 	cgroups := provider.ListCgroupsByPrefix(prefix)

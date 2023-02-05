@@ -1,10 +1,9 @@
 package writer
 
 import (
-	"github.com/strategicpause/cgstat/stats/v1"
-
 	"github.com/gosuri/uilive"
 	"github.com/rodaine/table"
+	"github.com/strategicpause/cgstat/stats/common"
 )
 
 type DisplayVerbosity int
@@ -28,7 +27,7 @@ func NewCgStatsDisplayWriter() StatsWriter {
 	}
 }
 
-func (c *CgStatsDisplayWriter) Write(cgroupStats []*v1.CgroupStats) error {
+func (c *CgStatsDisplayWriter) Write(cgroupStats []*common.CgroupStats) error {
 	tbl := table.New("Name", "CPU", "NumProcesses", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
 		"Cache", "Dirty", "WriteBack", "UnderOom", "OomKill")
 	tbl.WithWriter(c.writer)

@@ -1,8 +1,7 @@
-package v1
+package common
 
 import (
 	"fmt"
-	"github.com/strategicpause/cgstat/stats"
 	"time"
 )
 
@@ -111,13 +110,13 @@ func (c *CgroupStats) ToCsvRow() []string {
 
 func (c *CgroupStats) ToDisplayRow() []interface{} {
 	CPU := fmt.Sprintf("%.2f%%", c.CPU)
-	currentUsage := fmt.Sprintf("%s (%.2f%%)", stats.FormatBytes(c.CurrentUsage), c.CurrentUtilization)
-	maxUsage := fmt.Sprintf("%s (%.2f%%)", stats.FormatBytes(c.MaxUsage), c.MaxUtilization)
-	usageLimit := stats.FormatBytes(c.UsageLimit)
-	rss := stats.FormatBytes(c.Rss)
-	cacheSize := stats.FormatBytes(c.CacheSize)
-	dirtySize := stats.FormatBytes(c.DirtySize)
-	writeback := stats.FormatBytes(c.WriteBack)
+	currentUsage := fmt.Sprintf("%s (%.2f%%)", FormatBytes(c.CurrentUsage), c.CurrentUtilization)
+	maxUsage := fmt.Sprintf("%s (%.2f%%)", FormatBytes(c.MaxUsage), c.MaxUtilization)
+	usageLimit := FormatBytes(c.UsageLimit)
+	rss := FormatBytes(c.Rss)
+	cacheSize := FormatBytes(c.CacheSize)
+	dirtySize := FormatBytes(c.DirtySize)
+	writeback := FormatBytes(c.WriteBack)
 
 	return []interface{}{c.Name, CPU, c.NumProcesses, currentUsage, maxUsage, usageLimit, rss,
 		cacheSize, dirtySize, writeback, c.UnderOom, c.OomKill}
