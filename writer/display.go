@@ -28,7 +28,7 @@ func NewCgStatsDisplayWriter() StatsWriter {
 }
 
 func (c *CgStatsDisplayWriter) Write(cgroupStats common.CgroupStatsCollection) error {
-	tbl := table.New(cgroupStats.GetDisplayHeaders())
+	tbl := table.New(cgroupStats.GetDisplayHeaders()...)
 	tbl.WithWriter(c.writer)
 
 	for _, cgStats := range cgroupStats.GetCgroupStats() {

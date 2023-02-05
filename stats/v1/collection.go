@@ -10,10 +10,10 @@ func (_ CgroupStatsCollection) GetCSVHeaders() []string {
 		"Cache", "Dirty", "WriteBack", "UnderOom", "OomKill",
 	}
 }
-func (_ CgroupStatsCollection) GetDisplayHeaders() []string {
-	return []string{
-		"Name", "CPU", "NumProcesses", "CurrentUsage", "MaxUsage", "UsageLimit", "RSS",
-		"Cache", "Dirty", "WriteBack", "UnderOom", "OomKill",
+func (_ CgroupStatsCollection) GetDisplayHeaders() []interface{} {
+	return []interface{}{
+		"Name", "CPU", "NumProcesses", "CurrentUsage", "MaxUsage", "UsageLimit",
+		"RSS", "Cache", "Dirty", "WriteBack", "UnderOom", "OomKill",
 	}
 }
 

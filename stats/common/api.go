@@ -16,6 +16,6 @@ type CgroupStats interface {
 
 type CgroupStatsCollection interface {
 	GetCSVHeaders() []string
-	GetDisplayHeaders() []string
+	GetDisplayHeaders() []interface{}
 	GetCgroupStats() []CgroupStats
 }

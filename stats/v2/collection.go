@@ -7,8 +7,8 @@ type CgroupStatsCollection []common.CgroupStats
 func (_ CgroupStatsCollection) GetCSVHeaders() []string {
 	return []string{}
 }
-func (_ CgroupStatsCollection) GetDisplayHeaders() []string {
-	return []string{}
+func (_ CgroupStatsCollection) GetDisplayHeaders() []interface{} {
+	return []interface{}{}
 }
 
 func (c CgroupStatsCollection) GetCgroupStats() []common.CgroupStats {
