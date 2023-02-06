@@ -74,8 +74,10 @@ func (c *CgroupStatsProvider) withPids(pids *stats.PidsStat) CgroupStatsOpt {
 		if pids == nil {
 			return
 		}
-		cgroupStats.NumPids = pids.GetCurrent()
-		cgroupStats.MaxPids = pids.GetLimit()
+		cgroupStats.PID = &PidStats{
+			Current: pids.GetCurrent(),
+			Limit:   pids.GetLimit(),
+		}
 	}
 }
 
@@ -84,9 +86,60 @@ func (c *CgroupStatsProvider) withMemory(memory *stats.MemoryStat) CgroupStatsOp
 		if memory == nil {
 			return
 		}
-		cgroupStats.CurrentUsage = memory.GetUsage()
-		cgroupStats.UsageLimit = memory.GetUsageLimit()
-		// TODO
+
+		cgroupStats.Memory = &MemoryStats{
+			Usage:       memory.GetUsage(),
+			UsageLimit:  memory.GetUsageLimit(),
+			Unevictable: memory.GetUnevictable(),
+			Anon: &AnonymousMemoryStats{
+				Total:                memory.GetAnon(),
+				Active:               memory.GetActiveAnon(),
+				Inactive:             memory.GetInactiveAnon(),
+				TransparentHugepages: memory.GetAnonThp(),
+			},
+			PageCache: &PageCacheStats{
+				Activate:   memory.GetPgactivate(),
+				Deactivate: memory.GetPgdeactivate(),
+				Fault:      memory.GetPgfault(),
+				LazyFree:   memory.GetPglazyfree(),
+				LazyFreed:  memory.GetPglazyfreed(),
+				MajorFault: memory.GetPgmajfault(),
+				Refill:     memory.GetPgrefill(),
+				Scan:       memory.GetPgscan(),
+				Steal:      memory.GetPgsteal(),
+			},
+			Kernel: &KernelMemoryStats{
+				Slab:              memory.GetSlab(),
+				SlabReclaimable:   memory.GetSlabReclaimable(),
+				SlabUnreclaimable: memory.GetSlabUnreclaimable(),
+				Stack:             memory.GetKernelStack(),
+			},
+			Network: &NetworkMemoryStats{
+				Socket: memory.GetSock(),
+			},
+			Swap: &SwapMemoryStats{
+				Limit: memory.GetSwapLimit(),
+				Usage: memory.GetSwapUsage(),
+			},
+			Filesystem: &FilesystemMemoryStats{
+				Current:   memory.GetFile(),
+				Active:    memory.GetActiveFile(),
+				Inactive:  memory.GetInactiveFile(),
+				Dirty:     memory.GetFileDirty(),
+				Mapped:    memory.GetFileMapped(),
+				Writeback: memory.GetFileWriteback(),
+				Shmem:     memory.GetShmem(),
+			},
+			Workingset: &WorkingsetMemoryStats{
+				Refault:     memory.GetWorkingsetRefault(),
+				Activate:    memory.GetWorkingsetActivate(),
+				Nodereclaim: memory.GetWorkingsetNodereclaim(),
+			},
+			TransparentHugepage: &TransparentHugepageMemoryStats{
+				TransparentHugepageFaultAlloc:    memory.GetThpFaultAlloc(),
+				TransparentHugepageCollapseAlloc: memory.GetThpCollapseAlloc(),
+			},
+		}
 	}
 }
 
@@ -95,11 +148,13 @@ func (c *CgroupStatsProvider) withMemoryEvents(memoryEvents *stats.MemoryEvents)
 		if memoryEvents == nil {
 			return
 		}
-		cgroupStats.NumOomEvents = memoryEvents.GetOom()
-		cgroupStats.NumOomKillEvents = memoryEvents.GetOomKill()
-		cgroupStats.MemoryHigh = memoryEvents.GetHigh()
-		cgroupStats.MemoryMax = memoryEvents.GetMax()
-		cgroupStats.MemoryLow = memoryEvents.GetLow()
+		cgroupStats.MemoryEvent = &MemoryEventStats{
+			NumOomEvents:     memoryEvents.GetOom(),
+			NumOomKillEvents: memoryEvents.GetOomKill(),
+			MemoryHigh:       memoryEvents.GetHigh(),
+			MemoryMax:        memoryEvents.GetMax(),
+			MemoryLow:        memoryEvents.GetLow(),
+		}
 	}
 }
 
