@@ -1,9 +1,11 @@
 package v2
 
 import (
+	"fmt"
 	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/containerd/cgroups/v3/cgroup2/stats"
 	"github.com/strategicpause/cgstat/stats/common"
+	"github.com/struCoder/pidusage"
 )
 
 const (
@@ -48,7 +50,7 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 			return nil, err
 		}
 		cgroupStats := NewCgroupStat(cgroupPath,
-			c.withCPU(metrics.GetCPU()),
+			c.withCPU(mgr, metrics.GetCPU()),
 			c.withPids(metrics.GetPids()),
 			c.withMemory(metrics.GetMemory()),
 			c.withMemoryEvents(metrics.GetMemoryEvents()),
@@ -59,11 +61,8 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 	return statsCollection, nil
 }
 
-func (c *CgroupStatsProvider) withCPU(cpu *stats.CPUStat) CgroupStatsOpt {
+func (c *CgroupStatsProvider) withCPU(mgr *cgroup2.Manager, cpu *stats.CPUStat) CgroupStatsOpt {
 	return func(cgroupStats *CgroupStats) {
-		if cpu == nil {
-			return
-		}
 		cgroupStats.CPU = &CPUStats{
 			NumThrottledPeriods: cpu.GetNrThrottled(),
 			NumRunnablePeriods:  cpu.GetNrPeriods(),
@@ -72,14 +71,25 @@ func (c *CgroupStatsProvider) withCPU(cpu *stats.CPUStat) CgroupStatsOpt {
 			UserTimeInUsec:      cpu.GetUserUsec(),
 			ThrottledTimeInUsec: cpu.GetThrottledUsec(),
 		}
+
+		pids, err := mgr.Procs(true)
+		if err != nil {
+			fmt.Println("Error fetching cgroup processes: ", err)
+			return
+		}
+
+		for _, pid := range pids {
+			if stat, pidErr := pidusage.GetStat(int(pid)); pidErr == nil {
+				cgroupStats.CPU.Usage += stat.CPU
+			} else {
+				fmt.Println("Error fetching CPU usage for PID: ", pid)
+			}
+		}
 	}
 }
 
 func (c *CgroupStatsProvider) withPids(pids *stats.PidsStat) CgroupStatsOpt {
 	return func(cgroupStats *CgroupStats) {
-		if pids == nil {
-			return
-		}
 		cgroupStats.PID = &PidStats{
 			Current: pids.GetCurrent(),
 			Limit:   pids.GetLimit(),
@@ -89,10 +99,6 @@ func (c *CgroupStatsProvider) withPids(pids *stats.PidsStat) CgroupStatsOpt {
 
 func (c *CgroupStatsProvider) withMemory(memory *stats.MemoryStat) CgroupStatsOpt {
 	return func(cgroupStats *CgroupStats) {
-		if memory == nil {
-			return
-		}
-
 		cgroupStats.Memory = &MemoryStats{
 			Usage:       memory.GetUsage(),
 			UsageLimit:  memory.GetUsageLimit(),
@@ -151,15 +157,12 @@ func (c *CgroupStatsProvider) withMemory(memory *stats.MemoryStat) CgroupStatsOp
 
 func (c *CgroupStatsProvider) withMemoryEvents(memoryEvents *stats.MemoryEvents) CgroupStatsOpt {
 	return func(cgroupStats *CgroupStats) {
-		if memoryEvents == nil {
-			return
-		}
 		cgroupStats.MemoryEvent = &MemoryEventStats{
 			NumOomEvents:     memoryEvents.GetOom(),
 			NumOomKillEvents: memoryEvents.GetOomKill(),
-			MemoryHigh:       memoryEvents.GetHigh(),
-			MemoryMax:        memoryEvents.GetMax(),
-			MemoryLow:        memoryEvents.GetLow(),
+			High:             memoryEvents.GetHigh(),
+			Max:              memoryEvents.GetMax(),
+			Low:              memoryEvents.GetLow(),
 		}
 	}
 }

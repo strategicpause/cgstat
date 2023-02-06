@@ -1,11 +1,14 @@
 package v2
 
 import (
+	"fmt"
+	"github.com/rodaine/table"
 	"github.com/strategicpause/cgstat/stats/common"
 	"io"
 )
 
 type CPUStats struct {
+	Usage float64
 	// Number of runnable periods in which the application used its entire quota and was throttled
 	NumThrottledPeriods uint64
 	// Number of periods that any process in the cgroup was runnable
@@ -128,13 +131,13 @@ type MemoryEventStats struct {
 	// The number of times processes of the cgroup are throttled and routed to perform direct memory reclaim
 	// because the high memory boundary was exceeded.  For a cgroup whose memory usage is capped by the high limit
 	// rather than global memory pressure, this event's occurrences are expected.
-	MemoryHigh uint64
+	High uint64
 	// The number of times the cgroup's memory usage was about to go over the max boundary.  If direct reclaim
 	// fails to bring it down, the cgroup goes to OOM state.
-	MemoryMax uint64
+	Max uint64
 	// The number of times the cgroup is reclaimed due to high memory pressure even though its usage is under
 	// the low boundary.  This usually indicates that the low boundary is over-committed.
-	MemoryLow uint64
+	Low uint64
 }
 
 type MemoryStats struct {
@@ -191,9 +194,38 @@ func (c *CgroupStats) ToCsvRow() []string {
 }
 
 func (c *CgroupStats) ToDisplayRow() []interface{} {
-	return []interface{}{}
+	cgroupName := c.Name
+	cpuUsage := fmt.Sprintf("%.2f%%", c.CPU.Usage)
+	throttledPeriods := common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods, true)
+	pids := common.DisplayRatio(c.PID.Current, c.PID.Limit, true)
+	memoryUsage := common.DisplayRatio(c.Memory.Usage, c.Memory.UsageLimit, true)
+	anonMemory := common.DisplayRatio(c.Memory.Anon.Total, c.Memory.UsageLimit, false)
+	fileMemory := common.DisplayRatio(c.Memory.Filesystem.Current, c.Memory.UsageLimit, false)
+
+	return []interface{}{
+		cgroupName,
+		pids,
+		cpuUsage,
+		throttledPeriods,
+		memoryUsage,
+		anonMemory,
+		fileMemory,
+		c.MemoryEvent.High,
+		c.MemoryEvent.Max,
+		c.MemoryEvent.Low,
+		c.MemoryEvent.NumOomKillEvents,
+	}
 }
 
 func (c *CgroupStats) ToVerboseOutput(io.Writer) {
+	tbl := table.New()
+	tbl.AddRow("Name:", c.Name)
+	tbl.AddRow("PIDs:", common.DisplayRatio(c.PID.Current, c.PID.Limit, true))
+	tbl.AddRow("CPU Usage:", c.CPU.Usage)
+	tbl.AddRow("Throttled Periods:", common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods, true))
+	tbl.AddRow("Throttled Time:", c.CPU.ThrottledTimeInUsec)
+	tbl.AddRow("System Usage", common.DisplayRatio(c.CPU.SystemTimeInUsec, c.CPU.UsageInUsec, true))
+	tbl.AddRow("User Usage", common.DisplayRatio(c.CPU.UserTimeInUsec, c.CPU.UsageInUsec, true))
 
+	tbl.Print()
 }

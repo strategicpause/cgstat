@@ -15,3 +15,11 @@ func FormatBytes(bytes uint64) string {
 	return fmt.Sprintf("%.1f %ciB",
 		float64(bytes)/float64(div), "KMGTPE"[exp])
 }
+
+func DisplayRatio(current uint64, total uint64, withTotal bool) string {
+	usageRatio := float64(current) / float64(total)
+	if withTotal {
+		return fmt.Sprintf("%d / %d (%.2f%%)", current, total, usageRatio)
+	}
+	return fmt.Sprintf("%d (%.2f%%)", current, usageRatio)
+}

@@ -8,7 +8,10 @@ func (_ CgroupStatsCollection) GetCSVHeaders() []string {
 	return []string{}
 }
 func (_ CgroupStatsCollection) GetDisplayHeaders() []interface{} {
-	return []interface{}{}
+	return []interface{}{
+		"Name", "CPU Usage", "Throttled Periods", "PIDs", "Memory Usage", "Anon Memory",
+		"File Memory", "Memory High", "Memory Max", "Memory Low", "OOM Kills",
+	}
 }
 
 func (c CgroupStatsCollection) GetCgroupStats() []common.CgroupStats {
