@@ -52,7 +52,6 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 			c.withPids(metrics.GetPids()),
 			c.withMemory(metrics.GetMemory()),
 			c.withMemoryEvents(metrics.GetMemoryEvents()),
-			c.WithIO(metrics.GetIo()),
 		)
 		statsCollection = append(statsCollection, cgroupStats)
 	}
@@ -65,7 +64,14 @@ func (c *CgroupStatsProvider) withCPU(cpu *stats.CPUStat) CgroupStatsOpt {
 		if cpu == nil {
 			return
 		}
-		// TODO
+		cgroupStats.CPU = &CPUStats{
+			NumThrottledPeriods: cpu.GetNrThrottled(),
+			NumRunnablePeriods:  cpu.GetNrPeriods(),
+			UsageInUsec:         cpu.GetUsageUsec(),
+			SystemTimeInUsec:    cpu.GetSystemUsec(),
+			UserTimeInUsec:      cpu.GetUserUsec(),
+			ThrottledTimeInUsec: cpu.GetThrottledUsec(),
+		}
 	}
 }
 
@@ -155,14 +161,5 @@ func (c *CgroupStatsProvider) withMemoryEvents(memoryEvents *stats.MemoryEvents)
 			MemoryMax:        memoryEvents.GetMax(),
 			MemoryLow:        memoryEvents.GetLow(),
 		}
-	}
-}
-
-func (c *CgroupStatsProvider) WithIO(io *stats.IOStat) CgroupStatsOpt {
-	return func(cgroupStats *CgroupStats) {
-		if io == nil {
-			return
-		}
-		// TODO
 	}
 }

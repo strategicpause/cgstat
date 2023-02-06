@@ -6,6 +6,18 @@ import (
 )
 
 type CPUStats struct {
+	// Number of runnable periods in which the application used its entire quota and was throttled
+	NumThrottledPeriods uint64
+	// Number of periods that any process in the cgroup was runnable
+	NumRunnablePeriods uint64
+	// The total amount of time, in microseconds, processes within the cgroup were throttled
+	ThrottledTimeInUsec uint64
+	// Total CPU usage, in microseconds.
+	UsageInUsec uint64
+	// System CPU usage, in microseconds.
+	SystemTimeInUsec uint64
+	// Userspace CPU usage, in microseconds.
+	UserTimeInUsec uint64
 }
 
 type PidStats struct {
@@ -149,10 +161,6 @@ type MemoryStats struct {
 	//
 	TransparentHugepage *TransparentHugepageMemoryStats
 }
-
-type IOStats struct {
-}
-
 type CgroupStats struct {
 	//
 	Name string
@@ -164,8 +172,6 @@ type CgroupStats struct {
 	Memory *MemoryStats
 	//
 	MemoryEvent *MemoryEventStats
-	//
-	IO *IOStats
 }
 
 type CgroupStatsOpt func(*CgroupStats)
@@ -181,11 +187,11 @@ func NewCgroupStat(name string, opts ...CgroupStatsOpt) common.CgroupStats {
 }
 
 func (c *CgroupStats) ToCsvRow() []string {
-	return nil
+	return []string{}
 }
 
 func (c *CgroupStats) ToDisplayRow() []interface{} {
-	return nil
+	return []interface{}{}
 }
 
 func (c *CgroupStats) ToVerboseOutput(io.Writer) {
