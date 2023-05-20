@@ -41,24 +41,31 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 	var statsCollection CgroupStatsCollection
 
 	for _, cgroupPath := range cgroupPaths {
-		mgr, err := cgroup2.Load(cgroupPath)
+		cgroupStats, err := c.getStatsByCgroupPath(cgroupPath)
 		if err != nil {
 			return nil, err
 		}
-		metrics, err := mgr.Stat()
-		if err != nil {
-			return nil, err
-		}
-		cgroupStats := NewCgroupStat(cgroupPath,
-			c.withCPU(mgr, metrics.GetCPU()),
-			c.withPids(metrics.GetPids()),
-			c.withMemory(metrics.GetMemory()),
-			c.withMemoryEvents(metrics.GetMemoryEvents()),
-		)
 		statsCollection = append(statsCollection, cgroupStats)
 	}
 
 	return statsCollection, nil
+}
+
+func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (common.CgroupStats, error) {
+	mgr, err := cgroup2.Load(cgroupPath)
+	if err != nil {
+		return nil, err
+	}
+	metrics, err := mgr.Stat()
+	if err != nil {
+		return nil, err
+	}
+	return NewCgroupStat(cgroupPath,
+		c.withCPU(mgr, metrics.GetCPU()),
+		c.withPids(metrics.GetPids()),
+		c.withMemory(metrics.GetMemory()),
+		c.withMemoryEvents(metrics.GetMemoryEvents()),
+	), nil
 }
 
 func (c *CgroupStatsProvider) withCPU(mgr *cgroup2.Manager, cpu *stats.CPUStat) CgroupStatsOpt {

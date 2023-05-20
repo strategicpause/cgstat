@@ -28,6 +28,6 @@ vulncheck:
 	GOOS=linux govulncheck ./...
 
 install: build
-	cp ./bin/cgstat /usr/bin/local
+	cp ./bin/cgstat /usr/local/bin/
 
 release: fmt lint tidy vulncheck build

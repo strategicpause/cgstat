@@ -8,6 +8,7 @@ import (
 )
 
 type CPUStats struct {
+	//
 	Usage float64
 	// Number of runnable periods in which the application used its entire quota and was throttled
 	NumThrottledPeriods uint64
@@ -30,6 +31,8 @@ type PidStats struct {
 	Limit uint64
 }
 
+// AnonymousMemoryStats describes memory that is not backed by a filesystem. This is memory which is created for a
+// program's stack & heap or by explicit calls to the mmap system call.
 type AnonymousMemoryStats struct {
 	// Total amount of anonymous memory being used.
 	Total uint64
@@ -41,6 +44,10 @@ type AnonymousMemoryStats struct {
 	TransparentHugepages uint64
 }
 
+// PageCacheStats describes the memory which is read from and written to disk. When data is written to disk it is
+// written to the cache, and then written to the backing storage device. The page cache is an LRU cache, so that
+// least recently used entries are evicted and frequently used entries are kept to avoid expensive reads from the
+// storage device.
 type PageCacheStats struct {
 	// Amount of pages moved to the active LRU list.
 	Activate uint64
@@ -194,38 +201,36 @@ func (c *CgroupStats) ToCsvRow() []string {
 }
 
 func (c *CgroupStats) ToDisplayRow() []interface{} {
-	cgroupName := c.Name
+	cgroupName := common.Shorten(c.Name, 32)
 	cpuUsage := fmt.Sprintf("%.2f%%", c.CPU.Usage)
-	throttledPeriods := common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods, true)
-	pids := common.DisplayRatio(c.PID.Current, c.PID.Limit, true)
-	memoryUsage := common.DisplayRatio(c.Memory.Usage, c.Memory.UsageLimit, true)
-	anonMemory := common.DisplayRatio(c.Memory.Anon.Total, c.Memory.UsageLimit, false)
-	fileMemory := common.DisplayRatio(c.Memory.Filesystem.Current, c.Memory.UsageLimit, false)
+	throttledPeriods := common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods)
+	pids := common.DisplayRatio(c.PID.Current, c.PID.Limit)
+	memoryUsage := common.DisplayRatio(c.Memory.Anon.Total, c.Memory.UsageLimit, common.WithTotal(), common.WithBytes())
+	kernelMemory := common.DisplayRatio(c.Memory.Kernel.Slab+c.Memory.Kernel.Stack, c.Memory.UsageLimit, common.WithBytes())
+	pageCache := common.DisplayRatio(c.Memory.Filesystem.Active, c.Memory.UsageLimit, common.WithBytes())
 
 	return []interface{}{
 		cgroupName,
-		pids,
 		cpuUsage,
 		throttledPeriods,
+		pids,
 		memoryUsage,
-		anonMemory,
-		fileMemory,
-		c.MemoryEvent.High,
-		c.MemoryEvent.Max,
-		c.MemoryEvent.Low,
+		kernelMemory,
+		pageCache,
 		c.MemoryEvent.NumOomKillEvents,
 	}
 }
 
-func (c *CgroupStats) ToVerboseOutput(io.Writer) {
+func (c *CgroupStats) ToVerboseOutput(w io.Writer) {
 	tbl := table.New()
+	tbl.WithWriter(w)
 	tbl.AddRow("Name:", c.Name)
-	tbl.AddRow("PIDs:", common.DisplayRatio(c.PID.Current, c.PID.Limit, true))
+	tbl.AddRow("PIDs:", common.DisplayRatio(c.PID.Current, c.PID.Limit, common.WithTotal()))
 	tbl.AddRow("CPU Usage:", c.CPU.Usage)
-	tbl.AddRow("Throttled Periods:", common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods, true))
+	tbl.AddRow("Throttled Periods:", common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods, common.WithTotal()))
 	tbl.AddRow("Throttled Time:", c.CPU.ThrottledTimeInUsec)
-	tbl.AddRow("System Usage", common.DisplayRatio(c.CPU.SystemTimeInUsec, c.CPU.UsageInUsec, true))
-	tbl.AddRow("User Usage", common.DisplayRatio(c.CPU.UserTimeInUsec, c.CPU.UsageInUsec, true))
+	tbl.AddRow("System Usage", common.DisplayRatio(c.CPU.SystemTimeInUsec, c.CPU.UsageInUsec, common.WithTotal()))
+	tbl.AddRow("User Usage", common.DisplayRatio(c.CPU.UserTimeInUsec, c.CPU.UsageInUsec, common.WithTotal()))
 
 	tbl.Print()
 }
