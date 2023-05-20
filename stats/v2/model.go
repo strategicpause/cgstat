@@ -171,6 +171,34 @@ type MemoryStats struct {
 	//
 	TransparentHugepage *TransparentHugepageMemoryStats
 }
+
+type TCPNetworkStats struct {
+	// Number of TCP sockets which are not in the CLOSED state.
+	Sockets uint64
+	// Amount of bytes allocated to TCP.
+	SocketMemory uint64
+	// TCP receive queue length.
+	RxQueueLength uint64
+	// TCP transfer queue length.
+	TxQueueLength uint64
+}
+
+type UDPNetworkStats struct {
+	// Number of UDP sockets which are not in the CLOSED state.
+	Sockets uint64
+	// Amount of bytes allocated to UDP.
+	SocketMemory uint64
+	// UDP receive queue length.
+	RxQueueLength uint64
+	// UDP transfer queue length.
+	TxQueueLength uint64
+}
+
+type NetworkStats struct {
+	TCPStats *TCPNetworkStats
+	UDPStats *UDPNetworkStats
+}
+
 type CgroupStats struct {
 	//
 	Name string
@@ -182,6 +210,8 @@ type CgroupStats struct {
 	Memory *MemoryStats
 	//
 	MemoryEvent *MemoryEventStats
+	//
+	Network *NetworkStats
 }
 
 type CgroupStatsOpt func(*CgroupStats)
@@ -205,9 +235,11 @@ func (c *CgroupStats) ToDisplayRow() []interface{} {
 	cpuUsage := fmt.Sprintf("%.2f%%", c.CPU.Usage)
 	throttledPeriods := common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods)
 	pids := common.DisplayRatio(c.PID.Current, c.PID.Limit)
-	memoryUsage := common.DisplayRatio(c.Memory.Anon.Total, c.Memory.UsageLimit, common.WithTotal(), common.WithBytes())
+	memoryUsage := common.DisplayRatio(c.Memory.Anon.Total, c.Memory.UsageLimit, common.WithBytes())
 	kernelMemory := common.DisplayRatio(c.Memory.Kernel.Slab+c.Memory.Kernel.Stack, c.Memory.UsageLimit, common.WithBytes())
 	pageCache := common.DisplayRatio(c.Memory.Filesystem.Active, c.Memory.UsageLimit, common.WithBytes())
+	tcpSockets := fmt.Sprintf("%d (%s)", c.Network.TCPStats.Sockets, common.FormatBytes(c.Network.TCPStats.SocketMemory))
+	udpSockets := fmt.Sprintf("%d (%s)", c.Network.UDPStats.Sockets, common.FormatBytes(c.Network.UDPStats.SocketMemory))
 
 	return []interface{}{
 		cgroupName,
@@ -218,6 +250,8 @@ func (c *CgroupStats) ToDisplayRow() []interface{} {
 		kernelMemory,
 		pageCache,
 		c.MemoryEvent.NumOomKillEvents,
+		tcpSockets,
+		udpSockets,
 	}
 }
 

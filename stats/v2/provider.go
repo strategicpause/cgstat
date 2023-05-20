@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/containerd/cgroups/v3/cgroup2/stats"
+	"github.com/prometheus/procfs"
 	"github.com/strategicpause/cgstat/stats/common"
 	"github.com/struCoder/pidusage"
 )
 
 const (
 	CgroupPrefix = "/sys/fs/cgroup"
+	// SocketPageSizeInBytes tells us the size of pages which are allocated to either TCP or UDP.
+	SocketPageSizeInBytes = 4096
 )
 
 type CgroupStatsProvider struct {
@@ -65,6 +68,7 @@ func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (common.Cg
 		c.withPids(metrics.GetPids()),
 		c.withMemory(metrics.GetMemory()),
 		c.withMemoryEvents(metrics.GetMemoryEvents()),
+		c.withNetwork(mgr),
 	), nil
 }
 
@@ -170,6 +174,50 @@ func (c *CgroupStatsProvider) withMemoryEvents(memoryEvents *stats.MemoryEvents)
 			High:             memoryEvents.GetHigh(),
 			Max:              memoryEvents.GetMax(),
 			Low:              memoryEvents.GetLow(),
+		}
+	}
+}
+
+func (c *CgroupStatsProvider) withNetwork(mgr *cgroup2.Manager) CgroupStatsOpt {
+	return func(cgroupStats *CgroupStats) {
+		pids, err := mgr.Procs(true)
+		if err != nil {
+			return
+		}
+
+		tcpStats := &TCPNetworkStats{}
+		udpStats := &UDPNetworkStats{}
+
+		for _, pid := range pids {
+			procPath := fmt.Sprintf("/proc/%d", pid)
+			if fs, err := procfs.NewFS(procPath); err == nil {
+				if tcpSummary, err := fs.NetTCPSummary(); err == nil {
+					tcpStats.TxQueueLength += tcpSummary.TxQueueLength
+					tcpStats.RxQueueLength += tcpSummary.RxQueueLength
+				}
+				if udpSummary, err := fs.NetUDPSummary(); err == nil {
+					udpStats.TxQueueLength += udpSummary.TxQueueLength
+					udpStats.RxQueueLength += udpSummary.RxQueueLength
+				}
+				if netSockStat, err := fs.NetSockstat(); err == nil {
+					for _, protocol := range netSockStat.Protocols {
+						if protocol.Protocol == "TCP" {
+							tcpStats.Sockets += uint64(protocol.InUse)
+							// The Mem value is reported in pages, so we need to convert pages to bytes in order to
+							// determine how much memory is being used.
+							tcpStats.SocketMemory += uint64(*protocol.Mem * SocketPageSizeInBytes)
+						} else if protocol.Protocol == "UDP" {
+							udpStats.Sockets += uint64(protocol.InUse)
+							udpStats.SocketMemory += uint64(*protocol.Mem * SocketPageSizeInBytes)
+						}
+					}
+				}
+			}
+		}
+
+		cgroupStats.Network = &NetworkStats{
+			TCPStats: tcpStats,
+			UDPStats: udpStats,
 		}
 	}
 }

@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/containerd/cgroups/v3 v3.0.1
 	github.com/gosuri/uilive v0.0.4
+	github.com/prometheus/procfs v0.9.0
 	github.com/rodaine/table v1.1.0
 	github.com/struCoder/pidusage v0.2.1
 	github.com/urfave/cli v1.22.12
