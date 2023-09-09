@@ -3,7 +3,8 @@ package common
 import "fmt"
 
 const (
-	DividerText = "[...]"
+	DividerText  = "[...]"
+	DiverTextLen = len(DividerText)
 )
 
 func FormatBytes(bytes uint64) string {
@@ -68,14 +69,19 @@ func DisplayRatio(current uint64, total uint64, opts ...DisplayOptions) string {
 }
 
 func Shorten(s string, truncateLen int) string {
-	if len(DividerText) >= truncateLen {
-		return DividerText
-	}
 	strLen := len(s)
 	if strLen <= truncateLen {
 		return s
 	}
-	prefixLen := (truncateLen - len(DividerText)) / 2
+
+	if DiverTextLen >= truncateLen {
+		return DividerText
+	}
+
+	prefixLen := (truncateLen - DiverTextLen) / 2
+	if prefixLen == 0 {
+		prefixLen = 1
+	}
 
 	return s[:prefixLen] + DividerText + s[strLen-prefixLen:]
 }

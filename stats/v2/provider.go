@@ -66,6 +66,7 @@ func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (common.Cg
 	return NewCgroupStat(cgroupPath,
 		c.withCPU(mgr, metrics.GetCPU()),
 		c.withPids(metrics.GetPids()),
+		c.withProcStats(mgr),
 		c.withMemory(metrics.GetMemory()),
 		c.withMemoryEvents(metrics.GetMemoryEvents()),
 		c.withNetwork(mgr),
@@ -175,6 +176,25 @@ func (c *CgroupStatsProvider) withMemoryEvents(memoryEvents *stats.MemoryEvents)
 			Max:              memoryEvents.GetMax(),
 			Low:              memoryEvents.GetLow(),
 		}
+	}
+}
+
+func (c *CgroupStatsProvider) withProcStats(mgr *cgroup2.Manager) CgroupStatsOpt {
+	return func(cgroupStats *CgroupStats) {
+		pids, err := mgr.Procs(true)
+		if err != nil {
+			return
+		}
+
+		procStats := ProcStats{}
+		for _, pid := range pids {
+			if proc, err := procfs.NewProc(int(pid)); err == nil {
+				fds, _ := proc.FileDescriptorsLen()
+				procStats.NumFD += uint64(fds)
+
+			}
+		}
+		cgroupStats.ProcStats = &procStats
 	}
 }
 

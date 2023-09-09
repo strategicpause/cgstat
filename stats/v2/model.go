@@ -24,6 +24,11 @@ type CPUStats struct {
 	UserTimeInUsec uint64
 }
 
+type ProcStats struct {
+	// The total number of open file descriptors for processes in the container
+	NumFD uint64
+}
+
 type PidStats struct {
 	// The number of processes currently in the cgroup and its descendants.
 	Current uint64
@@ -207,6 +212,8 @@ type CgroupStats struct {
 	//
 	PID *PidStats
 	//
+	ProcStats *ProcStats
+	//
 	Memory *MemoryStats
 	//
 	MemoryEvent *MemoryEventStats
@@ -240,6 +247,7 @@ func (c *CgroupStats) ToDisplayRow() []interface{} {
 	pageCache := common.DisplayRatio(c.Memory.Filesystem.Active, c.Memory.UsageLimit, common.WithBytes())
 	tcpSockets := fmt.Sprintf("%d (%s)", c.Network.TCPStats.Sockets, common.FormatBytes(c.Network.TCPStats.SocketMemory))
 	udpSockets := fmt.Sprintf("%d (%s)", c.Network.UDPStats.Sockets, common.FormatBytes(c.Network.UDPStats.SocketMemory))
+	numFDs := fmt.Sprintf("%d", c.ProcStats.NumFD)
 
 	return []interface{}{
 		cgroupName,
@@ -252,6 +260,7 @@ func (c *CgroupStats) ToDisplayRow() []interface{} {
 		c.MemoryEvent.NumOomKillEvents,
 		tcpSockets,
 		udpSockets,
+		numFDs,
 	}
 }
 
