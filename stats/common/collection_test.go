@@ -79,7 +79,7 @@ func TestCollection_ToVerboseOutput(t *testing.T) {
 		Stats: data,
 		VerboseOutputTransformer: func(writer io.Writer, strings []string) {
 			for _, str := range strings {
-				writer.Write([]byte(str))
+				_, _ = writer.Write([]byte(str))
 			}
 		},
 	}
