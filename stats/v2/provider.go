@@ -41,7 +41,7 @@ func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) (common.CgroupSt
 }
 
 func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common.CgroupStatsCollection, error) {
-	var statsCollection CgroupStatsCollection
+	var statsCollection []*CgroupStats
 
 	for _, cgroupPath := range cgroupPaths {
 		cgroupStats, err := c.getStatsByCgroupPath(cgroupPath)
@@ -51,7 +51,7 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 		statsCollection = append(statsCollection, cgroupStats)
 	}
 
-	return statsCollection, nil
+	return NewCollection(statsCollection), nil
 }
 
 func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (*CgroupStats, error) {

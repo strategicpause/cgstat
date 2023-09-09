@@ -37,7 +37,7 @@ func (c *CgroupStatsProvider) GetCgroupStatsByName(name string) (common.CgroupSt
 }
 
 func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common.CgroupStatsCollection, error) {
-	var stats CgroupStatsCollection
+	var stats []*CgroupStats
 	for _, cgroupPath := range cgroupPaths {
 		control, err := cgroups.Load(cgroups.StaticPath(cgroupPath))
 		if err != nil {
@@ -49,7 +49,7 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 		}
 		stats = append(stats, cgroupStats)
 	}
-	return stats, nil
+	return NewCollection(stats), nil
 }
 
 func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (*CgroupStats, error) {

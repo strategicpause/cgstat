@@ -8,28 +8,25 @@ import (
 	"time"
 )
 
-type CgroupStatsCollection []*CgroupStats
-
-func (c CgroupStatsCollection) ToCsvOutput() *common.CsvOutput {
-	csvOutput := common.CsvOutput{
-		Headers: c.getCSVHeaders(),
+func NewCollection(stats []*CgroupStats) common.CgroupStatsCollection {
+	return common.Collection[*CgroupStats]{
+		Stats:                    stats,
+		CsvHeadersProvider:       getCSVHeaders,
+		CsvRowTransformer:        toCSVRow,
+		DisplayHeadersProvider:   getDisplayHeaders,
+		DisplayRowTransformer:    toDisplayRow,
+		VerboseOutputTransformer: toVerboseOutput,
 	}
-
-	for _, s := range c {
-		csvOutput.Rows = append(csvOutput.Rows, c.toCSVRow(s))
-	}
-
-	return &csvOutput
 }
 
-func (_ CgroupStatsCollection) getCSVHeaders() []string {
+func getCSVHeaders() []string {
 	return []string{
 		"Name", "Timestamp", "Throttled Periods", "Runnable Periods", "Current PIDs", "PID Limit", "Anon Memory Usage",
 		"Kernel Memory", "Page Cache", "OOM Events", "OOM Kill Events", "TCP Sockets", "UDP Sockets", "Open Files",
 	}
 }
 
-func (_ CgroupStatsCollection) toCSVRow(c *CgroupStats) []string {
+func toCSVRow(c *CgroupStats) []string {
 	t, _ := time.Now().UTC().MarshalText()
 	return []string{
 		string(t),
@@ -50,26 +47,14 @@ func (_ CgroupStatsCollection) toCSVRow(c *CgroupStats) []string {
 	}
 }
 
-func (c CgroupStatsCollection) ToDisplayOutput() *common.DisplayOutput {
-	displayOutput := common.DisplayOutput{
-		Headers: c.getDisplayHeaders(),
-	}
-
-	for _, s := range c {
-		displayOutput.Rows = append(displayOutput.Rows, c.toDisplayRow(s))
-	}
-
-	return &displayOutput
-}
-
-func (_ CgroupStatsCollection) getDisplayHeaders() []interface{} {
+func getDisplayHeaders() []interface{} {
 	return []interface{}{
 		"Name", "CPU Usage", "Throttled Periods", "PIDs", "Anon Memory Usage", "Kernel Memory", "Page Cache",
 		"OOM Kills", "TCP Sockets", "UDP Sockets", "Open Files",
 	}
 }
 
-func (_ CgroupStatsCollection) toDisplayRow(c *CgroupStats) []interface{} {
+func toDisplayRow(c *CgroupStats) []interface{} {
 	cgroupName := common.Shorten(c.Name, 32)
 	cpuUsage := fmt.Sprintf("%.2f%%", c.CPU.Usage)
 	throttledPeriods := common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods)
@@ -97,7 +82,7 @@ func (_ CgroupStatsCollection) toDisplayRow(c *CgroupStats) []interface{} {
 	}
 }
 
-func (c CgroupStatsCollection) ToVerboseOutput(w io.Writer) {
+func toVerboseOutput(w io.Writer, c []*CgroupStats) {
 	tbl := table.New()
 	tbl.WithWriter(w)
 	for _, cgroupStats := range c {
