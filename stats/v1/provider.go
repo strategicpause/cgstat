@@ -52,7 +52,7 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 	return stats, nil
 }
 
-func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (common.CgroupStats, error) {
+func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup) (*CgroupStats, error) {
 	metrics, err := control.Stat(cgroups.IgnoreNotExist)
 
 	if err != nil {

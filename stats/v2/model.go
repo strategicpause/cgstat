@@ -1,12 +1,5 @@
 package v2
 
-import (
-	"fmt"
-	"github.com/rodaine/table"
-	"github.com/strategicpause/cgstat/stats/common"
-	"io"
-)
-
 type CPUStats struct {
 	//
 	Usage float64
@@ -223,7 +216,7 @@ type CgroupStats struct {
 
 type CgroupStatsOpt func(*CgroupStats)
 
-func NewCgroupStat(name string, opts ...CgroupStatsOpt) common.CgroupStats {
+func NewCgroupStat(name string, opts ...CgroupStatsOpt) *CgroupStats {
 	cgroupStats := &CgroupStats{
 		Name: name,
 	}
@@ -231,49 +224,4 @@ func NewCgroupStat(name string, opts ...CgroupStatsOpt) common.CgroupStats {
 		opt(cgroupStats)
 	}
 	return cgroupStats
-}
-
-func (c *CgroupStats) ToCsvRow() []string {
-	return []string{}
-}
-
-func (c *CgroupStats) ToDisplayRow() []interface{} {
-	cgroupName := common.Shorten(c.Name, 32)
-	cpuUsage := fmt.Sprintf("%.2f%%", c.CPU.Usage)
-	throttledPeriods := common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods)
-	pids := common.DisplayRatio(c.PID.Current, c.PID.Limit)
-	memoryUsage := common.DisplayRatio(c.Memory.Anon.Total, c.Memory.UsageLimit, common.WithBytes())
-	kernelMemory := common.DisplayRatio(c.Memory.Kernel.Slab+c.Memory.Kernel.Stack, c.Memory.UsageLimit, common.WithBytes())
-	pageCache := common.DisplayRatio(c.Memory.Filesystem.Active, c.Memory.UsageLimit, common.WithBytes())
-	tcpSockets := fmt.Sprintf("%d (%s)", c.Network.TCPStats.Sockets, common.FormatBytes(c.Network.TCPStats.SocketMemory))
-	udpSockets := fmt.Sprintf("%d (%s)", c.Network.UDPStats.Sockets, common.FormatBytes(c.Network.UDPStats.SocketMemory))
-	numFDs := fmt.Sprintf("%d", c.ProcStats.NumFD)
-
-	return []interface{}{
-		cgroupName,
-		cpuUsage,
-		throttledPeriods,
-		pids,
-		memoryUsage,
-		kernelMemory,
-		pageCache,
-		c.MemoryEvent.NumOomKillEvents,
-		tcpSockets,
-		udpSockets,
-		numFDs,
-	}
-}
-
-func (c *CgroupStats) ToVerboseOutput(w io.Writer) {
-	tbl := table.New()
-	tbl.WithWriter(w)
-	tbl.AddRow("Name:", c.Name)
-	tbl.AddRow("PIDs:", common.DisplayRatio(c.PID.Current, c.PID.Limit, common.WithTotal()))
-	tbl.AddRow("CPU Usage:", c.CPU.Usage)
-	tbl.AddRow("Throttled Periods:", common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods, common.WithTotal()))
-	tbl.AddRow("Throttled Time:", c.CPU.ThrottledTimeInUsec)
-	tbl.AddRow("System Usage", common.DisplayRatio(c.CPU.SystemTimeInUsec, c.CPU.UsageInUsec, common.WithTotal()))
-	tbl.AddRow("User Usage", common.DisplayRatio(c.CPU.UserTimeInUsec, c.CPU.UsageInUsec, common.WithTotal()))
-
-	tbl.Print()
 }

@@ -28,12 +28,12 @@ func NewCgStatsDisplayWriter() StatsWriter {
 }
 
 func (c *CgStatsDisplayWriter) Write(cgroupStats common.CgroupStatsCollection) error {
-	tbl := table.New(cgroupStats.GetDisplayHeaders()...)
+	displayOutput := cgroupStats.ToDisplayOutput()
+
+	tbl := table.New(displayOutput.Headers...)
 	tbl.WithWriter(c.writer)
 
-	for _, cgStats := range cgroupStats.GetCgroupStats() {
-		row := cgStats.ToDisplayRow()
-		// Write to display
+	for _, row := range displayOutput.Rows {
 		tbl.AddRow(row...)
 	}
 	tbl.Print()

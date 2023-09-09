@@ -19,8 +19,7 @@ func NewCgroupStatsVerboseWriter() StatsWriter {
 }
 
 func (c *CgStatsVerboseWriter) Write(cgStats common.CgroupStatsCollection) error {
-	for _, s := range cgStats.GetCgroupStats() {
-		s.ToVerboseOutput(c.writer)
-	}
+	cgStats.ToVerboseOutput(c.writer)
+
 	return c.writer.Flush()
 }

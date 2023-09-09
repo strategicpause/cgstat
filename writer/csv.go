@@ -26,11 +26,13 @@ func NewCgroupStatsCsvWriter(filename string) (*CgroupStatsCsvWriter, error) {
 }
 
 func (c *CgroupStatsCsvWriter) Write(collection common.CgroupStatsCollection) error {
-	if err := c.writer.Write(collection.GetCSVHeaders()); err != nil {
+	csvOutput := collection.ToCsvOutput()
+	if err := c.writer.Write(csvOutput.Headers); err != nil {
 		return err
 	}
-	for _, s := range collection.GetCgroupStats() {
-		if err := c.writer.Write(s.ToCsvRow()); err != nil {
+
+	for _, row := range csvOutput.Rows {
+		if err := c.writer.Write(row); err != nil {
 			return err
 		}
 	}

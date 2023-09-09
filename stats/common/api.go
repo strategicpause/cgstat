@@ -8,14 +8,18 @@ type CgroupStatsProvider interface {
 	GetCgroupStatsByName(name string) (CgroupStatsCollection, error)
 }
 
-type CgroupStats interface {
-	ToCsvRow() []string
-	ToDisplayRow() []interface{}
-	ToVerboseOutput(io.Writer)
+type CgroupStatsCollection interface {
+	ToCsvOutput() *CsvOutput
+	ToDisplayOutput() *DisplayOutput
+	ToVerboseOutput(writer io.Writer)
 }
 
-type CgroupStatsCollection interface {
-	GetCSVHeaders() []string
-	GetDisplayHeaders() []interface{}
-	GetCgroupStats() []CgroupStats
+type CsvOutput struct {
+	Headers []string
+	Rows    [][]string
+}
+
+type DisplayOutput struct {
+	Headers []interface{}
+	Rows    [][]interface{}
 }

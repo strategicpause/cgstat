@@ -54,7 +54,7 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 	return statsCollection, nil
 }
 
-func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (common.CgroupStats, error) {
+func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (*CgroupStats, error) {
 	mgr, err := cgroup2.Load(cgroupPath)
 	if err != nil {
 		return nil, err
