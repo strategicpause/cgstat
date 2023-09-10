@@ -15,7 +15,12 @@ type BlockDevice struct {
 type CgroupStats struct {
 	Name string
 	/** CPU **/
-	CPU float64
+	// Percentage of CPU the cgroup is utilizing
+	CPUUtilization float64
+	// System time in microseconds
+	SystemTime int64
+	// CPU Usage in microseconds
+	CPUUsage uint64
 	// The total CPU throttled time
 	ThrottlePeriods uint64
 	//

@@ -6,7 +6,7 @@ import (
 	"github.com/containerd/cgroups/v3/cgroup2/stats"
 	"github.com/prometheus/procfs"
 	"github.com/strategicpause/cgstat/stats/common"
-	"github.com/struCoder/pidusage"
+	"time"
 )
 
 const (
@@ -16,12 +16,14 @@ const (
 )
 
 type CgroupStatsProvider struct {
-	commonProvider *common.CommonCgroupStatsProvider
+	commonProvider               *common.CommonCgroupStatsProvider
+	previousCPUStatsByCgroupPath map[string]*CPUStats
 }
 
 func NewCgroupStatsProvider() common.CgroupStatsProvider {
 	return &CgroupStatsProvider{
-		commonProvider: common.NewCommonCgroupStatsProvider(CgroupPrefix),
+		commonProvider:               common.NewCommonCgroupStatsProvider(CgroupPrefix),
+		previousCPUStatsByCgroupPath: map[string]*CPUStats{},
 	}
 }
 
@@ -63,19 +65,28 @@ func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (*CgroupSt
 	if err != nil {
 		return nil, err
 	}
-	return NewCgroupStat(cgroupPath,
-		c.withCPU(mgr, metrics.GetCPU()),
+
+	previousCPUStats := c.previousCPUStatsByCgroupPath[cgroupPath]
+
+	cgroupStats := NewCgroupStat(cgroupPath,
+		c.withCPU(metrics.GetCPU(), previousCPUStats),
 		c.withPids(metrics.GetPids()),
 		c.withProcStats(mgr),
 		c.withMemory(metrics.GetMemory()),
 		c.withMemoryEvents(metrics.GetMemoryEvents()),
 		c.withNetwork(mgr),
-	), nil
+	)
+
+	// Use the current CPU stats as the previous for this cgroup
+	c.previousCPUStatsByCgroupPath[cgroupPath] = cgroupStats.CPU
+
+	return cgroupStats, nil
 }
 
-func (c *CgroupStatsProvider) withCPU(mgr *cgroup2.Manager, cpu *stats.CPUStat) CgroupStatsOpt {
+func (c *CgroupStatsProvider) withCPU(cpu *stats.CPUStat, prevCpu *CPUStats) CgroupStatsOpt {
 	return func(cgroupStats *CgroupStats) {
 		cgroupStats.CPU = &CPUStats{
+			SystemTime:          time.Now().UnixMicro(),
 			NumThrottledPeriods: cpu.GetNrThrottled(),
 			NumRunnablePeriods:  cpu.GetNrPeriods(),
 			UsageInUsec:         cpu.GetUsageUsec(),
@@ -83,19 +94,12 @@ func (c *CgroupStatsProvider) withCPU(mgr *cgroup2.Manager, cpu *stats.CPUStat) 
 			UserTimeInUsec:      cpu.GetUserUsec(),
 			ThrottledTimeInUsec: cpu.GetThrottledUsec(),
 		}
-
-		pids, err := mgr.Procs(true)
-		if err != nil {
-			fmt.Println("Error fetching cgroup processes: ", err)
-			return
-		}
-
-		for _, pid := range pids {
-			if stat, pidErr := pidusage.GetStat(int(pid)); pidErr == nil {
-				cgroupStats.CPU.Usage += stat.CPU
-			} else {
-				fmt.Println("Error fetching CPU usage for PID: ", pid)
-			}
+		if prevCpu == nil {
+			cgroupStats.CPU.Utilization = 0.0
+		} else {
+			cpuUsageDelta := float64(cgroupStats.CPU.UsageInUsec - prevCpu.UsageInUsec)
+			systemTimeDelta := float64(cgroupStats.CPU.SystemTime - prevCpu.SystemTime)
+			cgroupStats.CPU.Utilization = (cpuUsageDelta / systemTimeDelta) * 100.0
 		}
 	}
 }

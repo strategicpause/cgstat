@@ -4,11 +4,12 @@ import (
 	cgroups "github.com/containerd/cgroups/v3/cgroup1"
 	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	"github.com/strategicpause/cgstat/stats/common"
-	"github.com/struCoder/pidusage"
+	"time"
 )
 
 type CgroupStatsProvider struct {
-	commonProvider *common.CommonCgroupStatsProvider
+	commonProvider               *common.CommonCgroupStatsProvider
+	previousCPUStatsByCgroupPath map[string]*CgroupStats
 }
 
 const (
@@ -17,7 +18,8 @@ const (
 
 func NewCgroupStatsProvider() *CgroupStatsProvider {
 	return &CgroupStatsProvider{
-		commonProvider: common.NewCommonCgroupStatsProvider(CgroupPrefix),
+		commonProvider:               common.NewCommonCgroupStatsProvider(CgroupPrefix),
+		previousCPUStatsByCgroupPath: map[string]*CgroupStats{},
 	}
 }
 
@@ -61,36 +63,41 @@ func (c *CgroupStatsProvider) getCgroupStats(name string, control cgroups.Cgroup
 	cgStats := &CgroupStats{
 		Name: name,
 	}
-
-	err = c.withCpuStats(cgStats, control, metrics.CPU)
+	processes, err := control.Processes("cpu", true)
 	if err != nil {
 		return nil, err
 	}
+
+	prevStats := c.previousCPUStatsByCgroupPath[name]
+
+	c.withProcessStats(cgStats, processes)
+	c.withCpuStats(cgStats, metrics.CPU, prevStats)
 	c.withMemoryOomControl(cgStats, metrics.MemoryOomControl)
 	c.withMemoryStats(cgStats, metrics.Memory)
 	c.withIOStats(cgStats, metrics.Blkio)
 
+	c.previousCPUStatsByCgroupPath[name] = cgStats
+
 	return cgStats, nil
 }
 
-func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, control cgroups.Cgroup, cpuMetrics *v1.CPUStat) error {
-	processes, err := control.Processes("cpu", true)
-	if err != nil {
-		return err
-	}
-	for _, proc := range processes {
-		stat, pidErr := pidusage.GetStat(proc.Pid)
-		if pidErr != nil {
-			return pidErr
-		}
-		cgStats.CPU += stat.CPU
-	}
-
+func (c *CgroupStatsProvider) withProcessStats(cgStats *CgroupStats, processes []cgroups.Process) {
 	cgStats.NumProcesses = uint64(len(processes))
+}
+
+func (c *CgroupStatsProvider) withCpuStats(cgStats *CgroupStats, cpuMetrics *v1.CPUStat, prevStats *CgroupStats) {
+	cgStats.SystemTime = time.Now().UnixMicro()
+	cgStats.CPUUsage = cpuMetrics.GetUsage().Total
 	cgStats.ThrottlePeriods = cpuMetrics.Throttling.ThrottledPeriods
 	cgStats.TotalPeriods = cpuMetrics.Throttling.Periods
 
-	return nil
+	if prevStats == nil {
+		cgStats.CPUUtilization = 0.0
+	} else {
+		cpuUsageDelta := float64(cgStats.CPUUsage - prevStats.CPUUsage)
+		systemTimeDelta := float64(cgStats.SystemTime - prevStats.SystemTime)
+		cgStats.CPUUtilization = (cpuUsageDelta / systemTimeDelta) * 100.0
+	}
 }
 
 func (c *CgroupStatsProvider) withMemoryOomControl(cgStats *CgroupStats, oomMetrics *v1.MemoryOomControl) {

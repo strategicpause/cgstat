@@ -1,8 +1,10 @@
 package v2
 
 type CPUStats struct {
-	//
-	Usage float64
+	// SystemTime in Microseconds.
+	SystemTime int64
+	// CPU Utilization (percentage)
+	Utilization float64
 	// Number of runnable periods in which the application used its entire quota and was throttled
 	NumThrottledPeriods uint64
 	// Number of periods that any process in the cgroup was runnable

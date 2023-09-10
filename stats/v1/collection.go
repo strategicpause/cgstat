@@ -31,7 +31,7 @@ func toCSVRow(c *CgroupStats) []string {
 	return []string{
 		string(t),
 		c.Name,
-		fmt.Sprintf("%f", c.CPU),
+		fmt.Sprintf("%f", c.CPUUtilization),
 		fmt.Sprintf("%d", c.CurrentUsage),
 		fmt.Sprintf("%d", c.MaxUsage),
 		fmt.Sprintf("%d", c.UsageLimit),
@@ -52,7 +52,7 @@ func getDisplayHeaders() []interface{} {
 }
 
 func toDisplayRow(c *CgroupStats) []interface{} {
-	CPU := fmt.Sprintf("%.2f%%", c.CPU)
+	CPU := fmt.Sprintf("%.2f%%", c.CPUUtilization)
 	numProcess := fmt.Sprintf("%d", c.NumProcesses)
 	currentUsage := fmt.Sprintf("%s (%.2f%%)", common.FormatBytes(c.CurrentUsage), c.CurrentUtilization)
 	maxUsage := fmt.Sprintf("%s (%.2f%%)", common.FormatBytes(c.MaxUsage), c.MaxUtilization)
@@ -128,7 +128,7 @@ func printCounter(w io.Writer, name string, value uint64) {
 func printCPUStats(w io.Writer, s *CgroupStats) {
 	fmt.Fprintln(w, "CPU Stats")
 
-	printCpuStat(w, "CPU", s.CPU)
+	printCpuStat(w, "CPU", s.CPUUtilization)
 	printCounter(w, "NumProcesses", s.NumProcesses)
 	printCounter(w, "ThrottlePeriods", s.ThrottlePeriods)
 	printCounter(w, "TotalPeriods", s.TotalPeriods)
