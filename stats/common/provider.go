@@ -1,18 +1,20 @@
 package common
 
 import (
-	"log"
-	"os"
+	"io/fs"
 	"path/filepath"
+	"strings"
 )
 
 type CommonCgroupStatsProvider struct {
-	cgroupRootDir string
+	cgroupRootDir    string
+	cgroupRootDirLen int
 }
 
 func NewCommonCgroupStatsProvider(rootDir string) *CommonCgroupStatsProvider {
 	return &CommonCgroupStatsProvider{
-		cgroupRootDir: rootDir,
+		cgroupRootDir:    rootDir,
+		cgroupRootDirLen: len(rootDir),
 	}
 }
 
@@ -25,20 +27,13 @@ func (c *CommonCgroupStatsProvider) ListCgroupsByPrefix(cgroupPrefix string) []s
 		queue = queue[1:]
 
 		prefixPath := filepath.Join(c.cgroupRootDir, prefix)
-		files, err := os.ReadDir(prefixPath)
-		if err != nil {
-			log.Println(err)
-		}
 
-		for _, file := range files {
-			if file.IsDir() {
-				cgroupPath := filepath.Join(prefix, file.Name())
-				cgroupPaths = append(cgroupPaths, cgroupPath)
-				if prefix != cgroupPath {
-					queue = append(queue, cgroupPath)
-				}
+		_ = filepath.WalkDir(filepath.Dir(prefixPath), func(currPath string, d fs.DirEntry, err error) error {
+			if d.IsDir() && strings.HasPrefix(currPath, prefixPath) {
+				cgroupPaths = append(cgroupPaths, currPath[c.cgroupRootDirLen:])
 			}
-		}
+			return nil
+		})
 	}
 	return cgroupPaths
 }

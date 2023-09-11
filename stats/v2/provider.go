@@ -47,10 +47,10 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 
 	for _, cgroupPath := range cgroupPaths {
 		cgroupStats, err := c.getStatsByCgroupPath(cgroupPath)
-		if err != nil {
-			return nil, err
+		// TODO - Add a debug mode for logging these kinds of errors. Otherwise let's skip for nwo since it will add noise.
+		if err == nil {
+			statsCollection = append(statsCollection, cgroupStats)
 		}
-		statsCollection = append(statsCollection, cgroupStats)
 	}
 
 	return NewCollection(statsCollection), nil
@@ -59,7 +59,7 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 func (c *CgroupStatsProvider) getStatsByCgroupPath(cgroupPath string) (*CgroupStats, error) {
 	mgr, err := cgroup2.Load(cgroupPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not load cgroup %s: %w", cgroupPath, err)
 	}
 	metrics, err := mgr.Stat()
 	if err != nil {
