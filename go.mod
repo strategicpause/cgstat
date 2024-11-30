@@ -1,6 +1,6 @@
 module github.com/strategicpause/cgstat
 
-go 1.19
+go 1.23
 
 require (
 	github.com/containerd/cgroups/v3 v3.0.2

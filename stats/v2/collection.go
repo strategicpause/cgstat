@@ -2,10 +2,11 @@ package v2
 
 import (
 	"fmt"
-	"github.com/rodaine/table"
-	"github.com/strategicpause/cgstat/stats/common"
 	"io"
 	"time"
+
+	"github.com/rodaine/table"
+	"github.com/strategicpause/cgstat/stats/common"
 )
 
 func NewCollection(stats []*CgroupStats) common.CgroupStatsCollection {
@@ -49,7 +50,7 @@ func toCSVRow(c *CgroupStats) []string {
 
 func getDisplayHeaders() []interface{} {
 	return []interface{}{
-		"Name", "CPU Usage", "Throttled Periods", "PIDs", "Anon Memory Usage", "Swap Memory", "Kernel Memory", "Page Cache",
+		"Name", "CPU Usage", "Throttled Periods", "PIDs", "Mem Usage", "Anon Mem", "Swap Mem", "File Mem", "Kernel Mem",
 		"OOM Events / Kills", "TCP Sockets", "UDP Sockets", "Open Files",
 	}
 }
@@ -59,10 +60,11 @@ func toDisplayRow(c *CgroupStats) []interface{} {
 	cpuUsage := fmt.Sprintf("%.2f%%", c.CPU.Utilization)
 	throttledPeriods := common.DisplayRatio(c.CPU.NumThrottledPeriods, c.CPU.NumRunnablePeriods)
 	pids := common.DisplayRatio(c.PID.Current, c.PID.Limit)
-	memoryUsage := common.DisplayRatio(c.Memory.Anon.Total, c.Memory.UsageLimit, common.WithBytes())
-	swapUsage := common.DisplayRatio(c.Memory.Swap.Usage, c.Memory.Swap.Limit, common.WithBytes())
-	kernelMemory := common.DisplayRatio(c.Memory.Kernel.Slab+c.Memory.Kernel.Stack, c.Memory.UsageLimit, common.WithBytes())
-	pageCache := common.DisplayRatio(c.Memory.Filesystem.Active, c.Memory.UsageLimit, common.WithBytes())
+	memUsage := common.DisplayRatio(c.Memory.Usage-c.Memory.Filesystem.Inactive, c.Memory.UsageLimit, common.WithBytes())
+	anonMemUsage := common.FormatBytes(c.Memory.Anon.Total)
+	swapMemUsage := common.FormatBytes(c.Memory.Swap.Usage)
+	fileMemUsage := common.FormatBytes(c.Memory.Filesystem.Active + c.Memory.Filesystem.Inactive)
+	kernelMemUsage := common.FormatBytes(c.Memory.Kernel.Slab + c.Memory.Kernel.Stack)
 	numOomEvents := fmt.Sprintf("%d / %d", c.MemoryEvent.NumOomEvents, c.MemoryEvent.NumOomKillEvents)
 	tcpSockets := fmt.Sprintf("%d (%s)", c.Network.TCPStats.Sockets, common.FormatBytes(c.Network.TCPStats.SocketMemory))
 	udpSockets := fmt.Sprintf("%d (%s)", c.Network.UDPStats.Sockets, common.FormatBytes(c.Network.UDPStats.SocketMemory))
@@ -73,10 +75,11 @@ func toDisplayRow(c *CgroupStats) []interface{} {
 		cpuUsage,
 		throttledPeriods,
 		pids,
-		memoryUsage,
-		swapUsage,
-		kernelMemory,
-		pageCache,
+		memUsage,
+		anonMemUsage,
+		swapMemUsage,
+		fileMemUsage,
+		kernelMemUsage,
 		numOomEvents,
 		tcpSockets,
 		udpSockets,

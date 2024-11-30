@@ -10,7 +10,7 @@ fmt:
 lint:
 	@if [ ! -d /tmp/golangci-lint ]; then \
 		echo "Installing golangci-lint"; \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin v1.51.0; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.62.2; \
 		mkdir -p /tmp/golangci-lint/; \
 		mv ./bin/golangci-lint /tmp/golangci-lint/golangci-lint; \
 	fi; \

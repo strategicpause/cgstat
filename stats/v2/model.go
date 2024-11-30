@@ -31,8 +31,8 @@ type PidStats struct {
 	Limit uint64
 }
 
-// AnonymousMemoryStats describes memory that is not backed by a filesystem. This is memory which is created for a
-// program's stack & heap or by explicit calls to the mmap system call.
+// AnonymousMemoryStats describes memory which is created for a program's stack & heap or by explicit calls to the mmap
+// system call.
 type AnonymousMemoryStats struct {
 	// Total amount of anonymous memory being used.
 	Total uint64
@@ -40,7 +40,7 @@ type AnonymousMemoryStats struct {
 	Active uint64
 	// Anonymous memory that has not been used recently and can be swapped out.
 	Inactive uint64
-	// Amount of memory used in anonymous mappings backed by transparent hugepages.
+	// Amount of memory used in anonymous mappings backed by transparent huge-pages.
 	TransparentHugepages uint64
 }
 
@@ -94,67 +94,70 @@ type SwapMemoryStats struct {
 }
 
 type FilesystemMemoryStats struct {
-	// Amount of memory used to cache filesystem data, including tmpfs and shared memory.
+	// Current is the amount of memory used to cache filesystem data, including tmpfs and shared memory.
 	Current uint64
-	// Pagecache memory that has been used more recently and usually not reclaimed until needed.
+	// Active is the page-cache memory that has been used more recently and usually not reclaimed until needed.
 	Active uint64
-	// Pagecache memory that can be reclaimed without huge performance impact.
+	// Inactive is the amount of page-cache memory that can be reclaimed without huge performance impact.
 	Inactive uint64
-	// Amount of cached filesystem data that was modified but not yet written back to disk.
+	// Dirty is the amount of cached filesystem data that was modified but not yet written back to disk.
 	Dirty uint64
-	// Amount of cached filesystem data mapped with mmap()
+	// Mapped is the amount of cached filesystem data mapped with the mmap system call.
 	Mapped uint64
-	// Amount of cached filesystem data that was modified and is currently being written back to disk.
+	// Writeback is the amount of cached filesystem data that was modified and is currently being written back to disk.
 	Writeback uint64
-	// Amount of cached filesystem data that is swap-backed, such as tmpfs, shm segments, shared anonymous mmap()s.
+	// Shmem is the amount of cached filesystem data that is swap-backed, such as tmpfs, shm segments, shared anonymous
+	// mmap()s.
 	Shmem uint64
 }
 
 type WorkingsetMemoryStats struct {
-	// Number of refaults of previously evicted pages.
+	// Refault is the number of re-faults of previously evicted pages.
 	Refault uint64
-	// Number of refaulted pages that were immediately activated.
+	// Activate is the number of re-faulted pages that were immediately activated.
 	Activate uint64
-	// Number of times a shadow node has been reclaimed.
+	// Nodereclaim is the number of times a shadow node has been reclaimed.
 	Nodereclaim uint64
 }
 
 type TransparentHugepageMemoryStats struct {
-	// Number of transparent hugepages which were allocated to satisfy a page fault.
+	// TransparentHugepageFaultAlloc is the number of transparent hugepages which were allocated to satisfy a page
+	// fault.
 	TransparentHugepageFaultAlloc uint64
-	// Number of transparent hugepages which were allocated to allow collapsing an existing range of pages.
+	// TransparentHugepageCollapseAlloc is the number of transparent hugepages which were allocated to allow collapsing
+	// an existing range of pages.
 	TransparentHugepageCollapseAlloc uint64
 }
 
 type MemoryEventStats struct {
-	// The number of times the cgroup's memory usage reached the limit and allocation was about to fail.
-	// Depending on context, the result could be invoking the OOM killer and retrying allocation, or
+	// NumOomEvents is the number of times the cgroup's memory usage reached the limit and allocation was about to
+	// fail. Depending on context, the result could be invoking the OOM killer and retrying allocation, or
 	// failing allocation.
 	NumOomEvents uint64
-	// The number of processes in this cgroup or its subtree killed by any kind of OOM killer. This could be
-	// because of a breach of the cgroup’s memory limit, one of its ancestors’ memory limits, or an overall
-	// system memory shortage.
+	// NumOomKillEvents is the number of processes in this cgroup or its subtree killed by any kind of OOM killer.
+	// This could be because of a breach of the cgroup’s memory limit, one of its ancestors’ memory limits, or an
+	// overall system memory shortage.
 	NumOomKillEvents uint64
-	// The number of times processes of the cgroup are throttled and routed to perform direct memory reclaim
+	// High is the number of times processes of the cgroup are throttled and routed to perform direct memory reclaim
 	// because the high memory boundary was exceeded.  For a cgroup whose memory usage is capped by the high limit
 	// rather than global memory pressure, this event's occurrences are expected.
 	High uint64
-	// The number of times the cgroup's memory usage was about to go over the max boundary.  If direct reclaim
+	// Max is the number of times the cgroup's memory usage was about to go over the max boundary.  If direct reclaim
 	// fails to bring it down, the cgroup goes to OOM state.
 	Max uint64
-	// The number of times the cgroup is reclaimed due to high memory pressure even though its usage is under
+	// Low is the number of times the cgroup is reclaimed due to high memory pressure even though its usage is under
 	// the low boundary.  This usually indicates that the low boundary is over-committed.
 	Low uint64
 }
 
 type MemoryStats struct {
-	// The total amount of memory currently being used by the cgroup and its descendants.
+	// Usage is the total amount of memory currently being used by the cgroup and its descendants.
 	Usage uint64
-	// The maximum amount of memory that can be used by the cgroup and its descendants.
+	// UsageLimit is the maximum amount of memory that can be used by the cgroup and its descendants.
 	UsageLimit uint64
-	// Memory that cannot be reclaimed.
+	// Unevictable is the amount of memory that cannot be reclaimed in bytes.
 	Unevictable uint64
-	//
+	// Anon is anonymous memory that is not backed by a filesystem.
 	Anon *AnonymousMemoryStats
 	//
 	PageCache *PageCacheStats

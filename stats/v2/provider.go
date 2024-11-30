@@ -47,7 +47,7 @@ func (c *CgroupStatsProvider) getCgroupStatsByPath(cgroupPaths []string) (common
 
 	for _, cgroupPath := range cgroupPaths {
 		cgroupStats, err := c.getStatsByCgroupPath(cgroupPath)
-		// TODO - Add a debug mode for logging these kinds of errors. Otherwise let's skip for nwo since it will add noise.
+		// TODO - Add a debug mode for logging these kinds of errors. Otherwise let's skip for now since it will add noise.
 		if err == nil {
 			statsCollection = append(statsCollection, cgroupStats)
 		}
@@ -191,13 +191,14 @@ func (c *CgroupStatsProvider) withProcStats(mgr *cgroup2.Manager) CgroupStatsOpt
 		}
 
 		procStats := ProcStats{}
+		// For each PID in the cgroup, determine the number of open file descriptors it has.
 		for _, pid := range pids {
 			if proc, err := procfs.NewProc(int(pid)); err == nil {
 				fds, _ := proc.FileDescriptorsLen()
 				procStats.NumFD += uint64(fds)
-
 			}
 		}
+
 		cgroupStats.ProcStats = &procStats
 	}
 }
